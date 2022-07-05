@@ -12,54 +12,85 @@ sys.path.append(fpath)
 import treecode
 import directsum_gpu
 
+#different schemes for nbody simulations
 schemes = {}
 schemes["euler"] = "adk"
 schemes["kick-drift"] = "akd"
 schemes["drift-kick"] = "dak"
 schemes["leapfrog"] = "dakd"
 
-def evaluate(file=None,outfile=None,df=None,evaluate_at = None,accelerate=False,algo = "directsum",eval_type="both",scheme=schemes["leapfrog"],dt=1000,steps=1,save=True,**kwargs):
-    if type(df) == type(None):
+def evaluate(save=False, #save output to file
+            file=None, #name of file to read from
+            outfile=None, #name of output file
+            df=None, #dataframe to read from instead of file
+            evaluate_at = None, #dataframe to evaluate points at. If this is none, it evaluates at the points themselves
+            accelerate=False, #whether to use GPU accelerations
+            algo = "directsum", #directsum vs treecode
+            eval_type="both", #just phi or both phi and acceleration
+            scheme=schemes["leapfrog"], #scheme to use
+            dt=1000, #delta time
+            steps=1, #number of steps
+            **kwargs): #other keyword arguments
+
+    if type(df) == type(None): #if df isnt specified, read from file
         a = pd.read_csv(file)
     else:
         a = df
+    
+    #get positions/masses/velocities from the df
     particles = a.loc[:,["x","y","z"]].to_numpy(dtype=float)
     masses = a.loc[:,"mass"].to_numpy(dtype=float)
     velocities = a.loc[:,["vx","vy","vz"]].to_numpy(dtype=float)
+
+    #if evaluate is none, then set the evaluate points to the particles
     if type(evaluate_at) == type(None):
         evaluate_at = particles
     else:
         evaluate_at = evaluate_at.loc[:,["x","y","z"]].to_numpy(dtype=float)
-    first = time.perf_counter()
-    stats = {}
-    if eval_type == "phi":
+
+    first = time.perf_counter() #time execution
+
+    stats = {} #save stats here
+
+    if eval_type == "phi": #if we are just getting the phis
+
         ids = np.reshape(np.arange(len(evaluate_at)),(1,len(evaluate_at))).T
+
         if algo == "directsum":
             if accelerate:
                 accs,phis,stats = directsum_gpu.evaluate(particles,masses,evaluate_at,**kwargs)
             else:
                 accs,phis = DirectSum.acc_func(evaluate_at,particles,masses,**kwargs)
-        if algo == "treecode":
+        
+        elif algo == "treecode":
             tree = treecode.Tree(particles,masses)
             build_time = tree.build_tree()
             accs,phis,stats = tree.evaluate(evaluate_at,**kwargs)
             stats["tree_build_time"] = build_time
+        
         positions = evaluate_at
         vels = velocities
+
     else:
+
         ids = np.reshape(np.arange(len(particles)),(1,len(particles))).T
+
         scheme = scheme.lower()
         drift_t = 1/scheme.count("d")
         kick_t = 1/scheme.count("k")
+
         positions = np.zeros((steps+1,)+particles.shape,dtype=float)
         vels = np.zeros((steps+1,)+particles.shape,dtype=float)
         accs = np.zeros((steps+1,)+particles.shape,dtype=float)
         phis = np.zeros((steps+1,len(particles)),dtype=float)
+
         vels[0] = velocities
         positions[0] = particles
+
         truncations = 0
         directs = 0
-        for step in range(steps):
+
+        for step in range(steps + 1):
             for action in scheme:
                 if action == "a":
                     if algo == "directsum":
@@ -80,27 +111,31 @@ def evaluate(file=None,outfile=None,df=None,evaluate_at = None,accelerate=False,
                     particles = particles + velocities*dt*drift_t
             phis[step] = temp_phi
             accs[step] = acc
-            positions[step+1] = particles
-            vels[step+1] = velocities
+            if step + 1 < len(positions):
+                positions[step+1] = particles
+                vels[step+1] = velocities
+        
         if algo == "treecode":
             stats["truncations"] = truncations
             stats["directs"] = directs
-        if algo == "directsum":
-            acc,temp_phi = DirectSum.acc_func(particles,particles,masses,**kwargs)
-            phis[-1] = temp_phi
-            accs[-1] = acc
+
         ids = np.array([ids for i in range(steps+1)])
         ids = np.reshape(ids,(ids.shape[0]*ids.shape[1],ids.shape[2]))
+
         positions = np.reshape(positions,(positions.shape[0]*positions.shape[1],positions.shape[2]))
         vels = np.reshape(vels,(vels.shape[0]*vels.shape[1],vels.shape[2]))
         accs = np.reshape(accs,(accs.shape[0]*accs.shape[1],accs.shape[2]))
         phis = np.reshape(phis,(phis.shape[0]*phis.shape[1]))
-    second = time.perf_counter()
-    eval_time = second-first
-    stats.update({"eval_time":eval_time})
+
+    second = time.perf_counter() #end timer
+    eval_time = second-first #calculate execution time
+    stats.update({"eval_time":eval_time}) #add this to stats
+
+    #save this to a pd dataframe
     phis = pd.DataFrame(np.reshape(phis,(1,)+phis.shape).T,columns=["phi"])
     positions = pd.DataFrame(positions,columns=["x","y","z"])
     ids = pd.DataFrame(ids,columns=["id"],dtype=int)
+
     if eval_type == "phi":
         accs = pd.DataFrame(accs,columns=["ax","ay","az"])
         out = pd.concat((ids,positions,accs,phis),axis=1)
@@ -108,10 +143,12 @@ def evaluate(file=None,outfile=None,df=None,evaluate_at = None,accelerate=False,
         accs = pd.DataFrame(accs,columns=["ax","ay","az"])
         vels = pd.DataFrame(vels,columns=["vx","vy","vz"])
         out = pd.concat((ids,positions,accs,vels,phis),axis=1)
+    
     if save:
         if file == None:
             outfile = file.split(".")[0]+"_out"+".csv"
         out.to_csv(outfile,index=False)
+    
     return out,stats
 
 class DirectSum(object):
