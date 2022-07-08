@@ -57,14 +57,16 @@ class DirectSum(object):
             acc[idx] = temp_acc
         return acc,phi
 
-df = Distributions.Uniform(100,10000,0.1)
+df = Distributions.Uniform(5,3,100)
 pos = df.loc[:,["x","y","z"]].to_numpy()
 masses = df.loc[:,["mass"]].to_numpy().flatten()
 vels = np.zeros_like(pos,dtype=float)
+eval_pos = np.array([[0,0,0],[0,0,5]],dtype=float)
 
-parts,eval_pos = direct_sum.evaluate(pos,vels,masses)
-print(np.asarray(parts))
-print(np.asarray(eval_pos))
+first = time.perf_counter()
+part_out, eval_pos_out = direct_sum.evaluate(pos,vels,masses,steps=1)
+second = time.perf_counter()
+print(second-first)
 
 '''
 first = time.perf_counter()
