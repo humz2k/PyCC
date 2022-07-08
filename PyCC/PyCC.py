@@ -17,7 +17,7 @@ schemes = {}
 schemes["euler"] = "adk"
 schemes["kick-drift"] = "akd"
 schemes["drift-kick"] = "dak"
-schemes["leapfrog"] = "dakd"
+schemes["leapfrog"] = "adkd"
 
 def evaluate(save=False, #save output to file
             file=None, #name of file to read from
@@ -142,7 +142,7 @@ def evaluate(save=False, #save output to file
     else:
         accs = pd.DataFrame(accs,columns=["ax","ay","az"])
         vels = pd.DataFrame(vels,columns=["vx","vy","vz"])
-        out = pd.concat((ids,positions,accs,vels,phis),axis=1)
+        out = pd.concat((ids,positions,vels,accs,phis),axis=1)
     
     if save:
         if file == None:
