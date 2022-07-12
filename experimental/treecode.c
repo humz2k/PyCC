@@ -1026,6 +1026,7 @@ struct __pyx_MemviewEnum_obj;
 struct __pyx_memoryview_obj;
 struct __pyx_memoryviewslice_obj;
 struct __pyx_t_8treecode_Node;
+struct __pyx_t_8treecode_Queue;
 struct __pyx_opt_args_8treecode_evaluate;
 
 /* "treecode.pyx":65
@@ -1045,7 +1046,19 @@ struct __pyx_t_8treecode_Node {
   struct __pyx_t_8treecode_Node *children;
 };
 
-/* "treecode.pyx":247
+/* "treecode.pyx":199
+ *     return truncations
+ * 
+ * cdef struct Queue:             # <<<<<<<<<<<<<<
+ *     Node node
+ *     Queue *prev
+ */
+struct __pyx_t_8treecode_Queue {
+  struct __pyx_t_8treecode_Node node;
+  struct __pyx_t_8treecode_Queue *prev;
+};
+
+/* "treecode.pyx":287
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):             # <<<<<<<<<<<<<<
@@ -1871,6 +1884,7 @@ static struct __pyx_t_8treecode_Node __pyx_f_8treecode_c_build_tree(double, __Py
 static struct __pyx_t_8treecode_Node __pyx_f_8treecode_ret_node(void); /*proto*/
 static struct __pyx_t_8treecode_Node __pyx_f_8treecode_make_node(struct __pyx_t_8treecode_Node, int, int, Py_ssize_t, __Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice); /*proto*/
 static int __pyx_f_8treecode_phi_acc(struct __pyx_t_8treecode_Node, __Pyx_memviewslice, __Pyx_memviewslice, double, double, double, __Pyx_memviewslice, __Pyx_memviewslice); /*proto*/
+static struct __pyx_t_8treecode_Queue __pyx_f_8treecode_ret_queue(struct __pyx_t_8treecode_Node); /*proto*/
 static void __pyx_f_8treecode_traverse(struct __pyx_t_8treecode_Node, __Pyx_memviewslice, __Pyx_memviewslice, int, double, double, double, __Pyx_memviewslice, __Pyx_memviewslice, int, int *); /*proto*/
 static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice, __Pyx_memviewslice, __Pyx_memviewslice, int __pyx_skip_dispatch, struct __pyx_opt_args_8treecode_evaluate *__pyx_optional_args); /*proto*/
 static struct __pyx_array_obj *__pyx_array_new(PyObject *, Py_ssize_t, char *, char *, char *); /*proto*/
@@ -3587,7 +3601,7 @@ static struct __pyx_t_8treecode_Node __pyx_f_8treecode_c_build_tree(double __pyx
  * 
  *     return base_node             # <<<<<<<<<<<<<<
  * 
- * cdef Node ret_node():
+ * cdef Node ret_node() nogil:
  */
   __pyx_r = __pyx_v_base_node;
   goto __pyx_L0;
@@ -3620,7 +3634,7 @@ static struct __pyx_t_8treecode_Node __pyx_f_8treecode_c_build_tree(double __pyx
 /* "treecode.pyx":138
  *     return base_node
  * 
- * cdef Node ret_node():             # <<<<<<<<<<<<<<
+ * cdef Node ret_node() nogil:             # <<<<<<<<<<<<<<
  *     cdef Node out
  *     out.size = 0
  */
@@ -3628,11 +3642,9 @@ static struct __pyx_t_8treecode_Node __pyx_f_8treecode_c_build_tree(double __pyx
 static struct __pyx_t_8treecode_Node __pyx_f_8treecode_ret_node(void) {
   struct __pyx_t_8treecode_Node __pyx_v_out;
   struct __pyx_t_8treecode_Node __pyx_r;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("ret_node", 0);
 
   /* "treecode.pyx":140
- * cdef Node ret_node():
+ * cdef Node ret_node() nogil:
  *     cdef Node out
  *     out.size = 0             # <<<<<<<<<<<<<<
  *     return out
@@ -3653,14 +3665,13 @@ static struct __pyx_t_8treecode_Node __pyx_f_8treecode_ret_node(void) {
   /* "treecode.pyx":138
  *     return base_node
  * 
- * cdef Node ret_node():             # <<<<<<<<<<<<<<
+ * cdef Node ret_node() nogil:             # <<<<<<<<<<<<<<
  *     cdef Node out
  *     out.size = 0
  */
 
   /* function exit code */
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
@@ -4150,7 +4161,7 @@ static int __pyx_f_8treecode_phi_acc(struct __pyx_t_8treecode_Node __pyx_v_base_
  *         traverse(base_node,particle_array,pos,pos_idx,G,eps,theta,acc,phi,pos_idx,&truncations)
  *     return truncations             # <<<<<<<<<<<<<<
  * 
- * @cython.boundscheck(False)
+ * cdef struct Queue:
  */
   __pyx_r = __pyx_v_truncations;
   goto __pyx_L0;
@@ -4170,19 +4181,68 @@ static int __pyx_f_8treecode_phi_acc(struct __pyx_t_8treecode_Node __pyx_v_base_
 }
 
 /* "treecode.pyx":203
- * @cython.cdivision(True)
- * @cython.nonecheck(False)
- * cdef void traverse(Node node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:             # <<<<<<<<<<<<<<
+ *     Queue *prev
  * 
- *     cdef double acc_mul
+ * cdef Queue ret_queue(Node node) nogil:             # <<<<<<<<<<<<<<
+ *     cdef Queue ret
+ *     ret.node = node
  */
 
-static void __pyx_f_8treecode_traverse(struct __pyx_t_8treecode_Node __pyx_v_node, __Pyx_memviewslice __pyx_v_particle_array, __Pyx_memviewslice __pyx_v_pos, int __pyx_v_pos_idx, double __pyx_v_G, double __pyx_v_eps, double __pyx_v_theta, __Pyx_memviewslice __pyx_v_acc, __Pyx_memviewslice __pyx_v_phi, int __pyx_v_idx, int *__pyx_v_truncations) {
-  double __pyx_v_acc_mul;
+static struct __pyx_t_8treecode_Queue __pyx_f_8treecode_ret_queue(struct __pyx_t_8treecode_Node __pyx_v_node) {
+  struct __pyx_t_8treecode_Queue __pyx_v_ret;
+  struct __pyx_t_8treecode_Queue __pyx_r;
+
+  /* "treecode.pyx":205
+ * cdef Queue ret_queue(Node node) nogil:
+ *     cdef Queue ret
+ *     ret.node = node             # <<<<<<<<<<<<<<
+ *     return ret
+ * 
+ */
+  __pyx_v_ret.node = __pyx_v_node;
+
+  /* "treecode.pyx":206
+ *     cdef Queue ret
+ *     ret.node = node
+ *     return ret             # <<<<<<<<<<<<<<
+ * 
+ * #DO FREES
+ */
+  __pyx_r = __pyx_v_ret;
+  goto __pyx_L0;
+
+  /* "treecode.pyx":203
+ *     Queue *prev
+ * 
+ * cdef Queue ret_queue(Node node) nogil:             # <<<<<<<<<<<<<<
+ *     cdef Queue ret
+ *     ret.node = node
+ */
+
+  /* function exit code */
+  __pyx_L0:;
+  return __pyx_r;
+}
+
+/* "treecode.pyx":213
+ * @cython.cdivision(True)
+ * @cython.nonecheck(False)
+ * cdef void traverse(Node base_node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Queue zeroth
+ */
+
+static void __pyx_f_8treecode_traverse(struct __pyx_t_8treecode_Node __pyx_v_base_node, __Pyx_memviewslice __pyx_v_particle_array, __Pyx_memviewslice __pyx_v_pos, int __pyx_v_pos_idx, double __pyx_v_G, double __pyx_v_eps, double __pyx_v_theta, __Pyx_memviewslice __pyx_v_acc, __Pyx_memviewslice __pyx_v_phi, int __pyx_v_idx, int *__pyx_v_truncations) {
+  struct __pyx_t_8treecode_Queue __pyx_v_zeroth;
+  struct __pyx_t_8treecode_Queue __pyx_v_queue;
+  struct __pyx_t_8treecode_Queue __pyx_v_next_queue;
+  int __pyx_v_length;
+  struct __pyx_t_8treecode_Node __pyx_v_node;
+  int __pyx_v_i;
   double __pyx_v_dist;
-  long __pyx_v_i;
-  Py_ssize_t __pyx_t_1;
-  Py_ssize_t __pyx_t_2;
+  double __pyx_v_acc_mul;
+  int __pyx_t_1;
+  struct __pyx_t_8treecode_Node __pyx_t_2;
   Py_ssize_t __pyx_t_3;
   Py_ssize_t __pyx_t_4;
   Py_ssize_t __pyx_t_5;
@@ -4193,386 +4253,610 @@ static void __pyx_f_8treecode_traverse(struct __pyx_t_8treecode_Node __pyx_v_nod
   Py_ssize_t __pyx_t_10;
   Py_ssize_t __pyx_t_11;
   Py_ssize_t __pyx_t_12;
-  int __pyx_t_13;
-  long __pyx_t_14;
+  Py_ssize_t __pyx_t_13;
+  Py_ssize_t __pyx_t_14;
+  long __pyx_t_15;
+  int __pyx_t_16;
 
-  /* "treecode.pyx":207
+  /* "treecode.pyx":216
+ * 
+ *     cdef Queue zeroth
+ *     zeroth.node = ret_node()             # <<<<<<<<<<<<<<
+ * 
+ *     cdef Queue queue
+ */
+  __pyx_v_zeroth.node = __pyx_f_8treecode_ret_node();
+
+  /* "treecode.pyx":220
+ *     cdef Queue queue
+ *     cdef Queue next_queue
+ *     queue.node = base_node             # <<<<<<<<<<<<<<
+ *     queue.prev = &zeroth
+ *     cdef int length = 1
+ */
+  __pyx_v_queue.node = __pyx_v_base_node;
+
+  /* "treecode.pyx":221
+ *     cdef Queue next_queue
+ *     queue.node = base_node
+ *     queue.prev = &zeroth             # <<<<<<<<<<<<<<
+ *     cdef int length = 1
+ *     cdef Node node
+ */
+  __pyx_v_queue.prev = (&__pyx_v_zeroth);
+
+  /* "treecode.pyx":222
+ *     queue.node = base_node
+ *     queue.prev = &zeroth
+ *     cdef int length = 1             # <<<<<<<<<<<<<<
+ *     cdef Node node
+ *     cdef int i
+ */
+  __pyx_v_length = 1;
+
+  /* "treecode.pyx":228
  *     cdef double acc_mul
  * 
- *     if node.n_particles == 1:             # <<<<<<<<<<<<<<
- *         dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
+ *     while length != 0:             # <<<<<<<<<<<<<<
+ *         node = queue.node
  * 
  */
-  switch (__pyx_v_node.n_particles) {
-    case 1:
+  while (1) {
+    __pyx_t_1 = ((__pyx_v_length != 0) != 0);
+    if (!__pyx_t_1) break;
 
-    /* "treecode.pyx":208
+    /* "treecode.pyx":229
  * 
- *     if node.n_particles == 1:
- *         dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)             # <<<<<<<<<<<<<<
+ *     while length != 0:
+ *         node = queue.node             # <<<<<<<<<<<<<<
  * 
- *         if dist != 0:
+ *         if node.n_particles == 0:
  */
-    __pyx_t_1 = __pyx_v_pos_idx;
-    __pyx_t_2 = 0;
-    __pyx_t_3 = __pyx_v_node.start_index;
-    __pyx_t_4 = 0;
-    __pyx_t_5 = __pyx_v_pos_idx;
-    __pyx_t_6 = 1;
-    __pyx_t_7 = __pyx_v_node.start_index;
-    __pyx_t_8 = 1;
-    __pyx_t_9 = __pyx_v_pos_idx;
-    __pyx_t_10 = 2;
-    __pyx_t_11 = __pyx_v_node.start_index;
-    __pyx_t_12 = 2;
-    __pyx_v_dist = sqrt(((pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_1 * __pyx_v_pos.strides[0]) ) + __pyx_t_2 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_3 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_4 * __pyx_v_particle_array.strides[1]) )))), 2.0) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_5 * __pyx_v_pos.strides[0]) ) + __pyx_t_6 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_7 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_8 * __pyx_v_particle_array.strides[1]) )))), 2.0)) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_9 * __pyx_v_pos.strides[0]) ) + __pyx_t_10 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_12 * __pyx_v_particle_array.strides[1]) )))), 2.0)));
+    __pyx_t_2 = __pyx_v_queue.node;
+    __pyx_v_node = __pyx_t_2;
 
-    /* "treecode.pyx":210
- *         dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
+    /* "treecode.pyx":231
+ *         node = queue.node
  * 
- *         if dist != 0:             # <<<<<<<<<<<<<<
- *             if eps != 0:
- *                 dist = sqrt(dist**2 + eps**2)
+ *         if node.n_particles == 0:             # <<<<<<<<<<<<<<
+ *             queue = queue.prev[0]
+ *             length -= 1
  */
-    __pyx_t_13 = ((__pyx_v_dist != 0.0) != 0);
-    if (__pyx_t_13) {
+    switch (__pyx_v_node.n_particles) {
+      case 0:
 
-      /* "treecode.pyx":211
+      /* "treecode.pyx":232
  * 
- *         if dist != 0:
- *             if eps != 0:             # <<<<<<<<<<<<<<
- *                 dist = sqrt(dist**2 + eps**2)
- * 
+ *         if node.n_particles == 0:
+ *             queue = queue.prev[0]             # <<<<<<<<<<<<<<
+ *             length -= 1
+ *         elif node.n_particles == 1:
  */
-      __pyx_t_13 = ((__pyx_v_eps != 0.0) != 0);
-      if (__pyx_t_13) {
+      __pyx_v_queue = (__pyx_v_queue.prev[0]);
 
-        /* "treecode.pyx":212
- *         if dist != 0:
- *             if eps != 0:
- *                 dist = sqrt(dist**2 + eps**2)             # <<<<<<<<<<<<<<
- * 
- *             acc_mul = G * particle_array[node.start_index,3]/(dist**3)
+      /* "treecode.pyx":233
+ *         if node.n_particles == 0:
+ *             queue = queue.prev[0]
+ *             length -= 1             # <<<<<<<<<<<<<<
+ *         elif node.n_particles == 1:
+ *             queue = queue.prev[0]
  */
-        __pyx_v_dist = sqrt((pow(__pyx_v_dist, 2.0) + pow(__pyx_v_eps, 2.0)));
+      __pyx_v_length = (__pyx_v_length - 1);
 
-        /* "treecode.pyx":211
+      /* "treecode.pyx":231
+ *         node = queue.node
  * 
- *         if dist != 0:
- *             if eps != 0:             # <<<<<<<<<<<<<<
- *                 dist = sqrt(dist**2 + eps**2)
- * 
+ *         if node.n_particles == 0:             # <<<<<<<<<<<<<<
+ *             queue = queue.prev[0]
+ *             length -= 1
  */
-      }
+      break;
+      case 1:
 
-      /* "treecode.pyx":214
- *                 dist = sqrt(dist**2 + eps**2)
+      /* "treecode.pyx":235
+ *             length -= 1
+ *         elif node.n_particles == 1:
+ *             queue = queue.prev[0]             # <<<<<<<<<<<<<<
+ *             length -= 1
  * 
- *             acc_mul = G * particle_array[node.start_index,3]/(dist**3)             # <<<<<<<<<<<<<<
- *             acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
- *             acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
  */
-      __pyx_t_12 = __pyx_v_node.start_index;
-      __pyx_t_11 = 3;
-      __pyx_v_acc_mul = ((__pyx_v_G * (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_12 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_11 * __pyx_v_particle_array.strides[1]) )))) / pow(__pyx_v_dist, 3.0));
+      __pyx_v_queue = (__pyx_v_queue.prev[0]);
 
-      /* "treecode.pyx":215
+      /* "treecode.pyx":236
+ *         elif node.n_particles == 1:
+ *             queue = queue.prev[0]
+ *             length -= 1             # <<<<<<<<<<<<<<
  * 
- *             acc_mul = G * particle_array[node.start_index,3]/(dist**3)
- *             acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul             # <<<<<<<<<<<<<<
- *             acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
- *             acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
+ *             dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
  */
-      __pyx_t_11 = __pyx_v_node.start_index;
-      __pyx_t_12 = 0;
-      __pyx_t_10 = __pyx_v_pos_idx;
-      __pyx_t_9 = 0;
-      __pyx_t_8 = __pyx_v_idx;
-      __pyx_t_7 = 0;
-      *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_8 * __pyx_v_acc.strides[0]) ) + __pyx_t_7 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_12 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) ) + __pyx_t_9 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+      __pyx_v_length = (__pyx_v_length - 1);
 
-      /* "treecode.pyx":216
- *             acc_mul = G * particle_array[node.start_index,3]/(dist**3)
- *             acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
- *             acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul             # <<<<<<<<<<<<<<
- *             acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
- *             phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+      /* "treecode.pyx":238
+ *             length -= 1
+ * 
+ *             dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)             # <<<<<<<<<<<<<<
+ * 
+ *             if dist != 0:
  */
+      __pyx_t_3 = __pyx_v_pos_idx;
+      __pyx_t_4 = 0;
+      __pyx_t_5 = __pyx_v_node.start_index;
+      __pyx_t_6 = 0;
+      __pyx_t_7 = __pyx_v_pos_idx;
+      __pyx_t_8 = 1;
       __pyx_t_9 = __pyx_v_node.start_index;
       __pyx_t_10 = 1;
-      __pyx_t_12 = __pyx_v_pos_idx;
-      __pyx_t_11 = 1;
-      __pyx_t_7 = __pyx_v_idx;
-      __pyx_t_8 = 1;
-      *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_7 * __pyx_v_acc.strides[0]) ) + __pyx_t_8 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_9 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_10 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) ) + __pyx_t_11 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
-
-      /* "treecode.pyx":217
- *             acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
- *             acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
- *             acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul             # <<<<<<<<<<<<<<
- *             phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
- * 
- */
-      __pyx_t_11 = __pyx_v_node.start_index;
+      __pyx_t_11 = __pyx_v_pos_idx;
       __pyx_t_12 = 2;
-      __pyx_t_10 = __pyx_v_pos_idx;
-      __pyx_t_9 = 2;
-      __pyx_t_8 = __pyx_v_idx;
-      __pyx_t_7 = 2;
-      *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_8 * __pyx_v_acc.strides[0]) ) + __pyx_t_7 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_12 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) ) + __pyx_t_9 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+      __pyx_t_13 = __pyx_v_node.start_index;
+      __pyx_t_14 = 2;
+      __pyx_v_dist = sqrt(((pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_3 * __pyx_v_pos.strides[0]) ) + __pyx_t_4 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_5 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_6 * __pyx_v_particle_array.strides[1]) )))), 2.0) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_7 * __pyx_v_pos.strides[0]) ) + __pyx_t_8 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_9 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_10 * __pyx_v_particle_array.strides[1]) )))), 2.0)) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_11 * __pyx_v_pos.strides[0]) ) + __pyx_t_12 * __pyx_v_pos.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_13 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) )))), 2.0)));
 
-      /* "treecode.pyx":218
- *             acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
- *             acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
- *             phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist             # <<<<<<<<<<<<<<
+      /* "treecode.pyx":240
+ *             dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
  * 
- *         return
- */
-      __pyx_t_9 = __pyx_v_node.start_index;
-      __pyx_t_10 = 3;
-      __pyx_t_12 = __pyx_v_idx;
-      *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_12 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_9 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_10 * __pyx_v_particle_array.strides[1]) )))) / __pyx_v_dist);
-
-      /* "treecode.pyx":210
- *         dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
- * 
- *         if dist != 0:             # <<<<<<<<<<<<<<
- *             if eps != 0:
- *                 dist = sqrt(dist**2 + eps**2)
- */
-    }
-
-    /* "treecode.pyx":220
- *             phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
- * 
- *         return             # <<<<<<<<<<<<<<
- * 
- *     elif node.n_particles == 0:
- */
-    goto __pyx_L0;
-
-    /* "treecode.pyx":207
- *     cdef double acc_mul
- * 
- *     if node.n_particles == 1:             # <<<<<<<<<<<<<<
- *         dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
- * 
- */
-    break;
-    case 0:
-
-    /* "treecode.pyx":223
- * 
- *     elif node.n_particles == 0:
- *         return             # <<<<<<<<<<<<<<
- * 
- *     else:
- */
-    goto __pyx_L0;
-
-    /* "treecode.pyx":222
- *         return
- * 
- *     elif node.n_particles == 0:             # <<<<<<<<<<<<<<
- *         return
- * 
- */
-    break;
-    default:
-
-    /* "treecode.pyx":226
- * 
- *     else:
- *         dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)             # <<<<<<<<<<<<<<
- * 
- *         if dist != 0:
- */
-    __pyx_t_10 = __pyx_v_pos_idx;
-    __pyx_t_9 = 0;
-    __pyx_t_12 = __pyx_v_pos_idx;
-    __pyx_t_11 = 1;
-    __pyx_t_7 = __pyx_v_pos_idx;
-    __pyx_t_8 = 2;
-    __pyx_v_dist = sqrt(((pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) ) + __pyx_t_9 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[0])), 2.0) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) ) + __pyx_t_11 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[1])), 2.0)) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_7 * __pyx_v_pos.strides[0]) ) + __pyx_t_8 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[2])), 2.0)));
-
-    /* "treecode.pyx":228
- *         dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
- * 
- *         if dist != 0:             # <<<<<<<<<<<<<<
- *             if node.size**3/dist <= theta:
- *                 truncations[0] += 1
- */
-    __pyx_t_13 = ((__pyx_v_dist != 0.0) != 0);
-    if (__pyx_t_13) {
-
-      /* "treecode.pyx":229
- * 
- *         if dist != 0:
- *             if node.size**3/dist <= theta:             # <<<<<<<<<<<<<<
- *                 truncations[0] += 1
- *                 if eps != 0:
- */
-      __pyx_t_13 = (((pow(__pyx_v_node.size, 3.0) / __pyx_v_dist) <= __pyx_v_theta) != 0);
-      if (__pyx_t_13) {
-
-        /* "treecode.pyx":230
- *         if dist != 0:
- *             if node.size**3/dist <= theta:
- *                 truncations[0] += 1             # <<<<<<<<<<<<<<
+ *             if dist != 0:             # <<<<<<<<<<<<<<
  *                 if eps != 0:
  *                     dist = sqrt(dist**2 + eps**2)
  */
-        __pyx_t_14 = 0;
-        (__pyx_v_truncations[__pyx_t_14]) = ((__pyx_v_truncations[__pyx_t_14]) + 1);
+      __pyx_t_1 = ((__pyx_v_dist != 0.0) != 0);
+      if (__pyx_t_1) {
 
-        /* "treecode.pyx":231
- *             if node.size**3/dist <= theta:
- *                 truncations[0] += 1
+        /* "treecode.pyx":241
+ * 
+ *             if dist != 0:
  *                 if eps != 0:             # <<<<<<<<<<<<<<
  *                     dist = sqrt(dist**2 + eps**2)
- *                 acc_mul = G * node.mass/(dist**3)
+ * 
  */
-        __pyx_t_13 = ((__pyx_v_eps != 0.0) != 0);
-        if (__pyx_t_13) {
+        __pyx_t_1 = ((__pyx_v_eps != 0.0) != 0);
+        if (__pyx_t_1) {
 
-          /* "treecode.pyx":232
- *                 truncations[0] += 1
+          /* "treecode.pyx":242
+ *             if dist != 0:
  *                 if eps != 0:
  *                     dist = sqrt(dist**2 + eps**2)             # <<<<<<<<<<<<<<
- *                 acc_mul = G * node.mass/(dist**3)
- *                 acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+ * 
+ *                 acc_mul = G * particle_array[node.start_index,3]/(dist**3)
  */
           __pyx_v_dist = sqrt((pow(__pyx_v_dist, 2.0) + pow(__pyx_v_eps, 2.0)));
 
-          /* "treecode.pyx":231
- *             if node.size**3/dist <= theta:
- *                 truncations[0] += 1
+          /* "treecode.pyx":241
+ * 
+ *             if dist != 0:
  *                 if eps != 0:             # <<<<<<<<<<<<<<
  *                     dist = sqrt(dist**2 + eps**2)
- *                 acc_mul = G * node.mass/(dist**3)
+ * 
  */
         }
 
-        /* "treecode.pyx":233
+        /* "treecode.pyx":244
+ *                     dist = sqrt(dist**2 + eps**2)
+ * 
+ *                 acc_mul = G * particle_array[node.start_index,3]/(dist**3)             # <<<<<<<<<<<<<<
+ *                 acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
+ *                 acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+ */
+        __pyx_t_14 = __pyx_v_node.start_index;
+        __pyx_t_13 = 3;
+        __pyx_v_acc_mul = ((__pyx_v_G * (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_14 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_13 * __pyx_v_particle_array.strides[1]) )))) / pow(__pyx_v_dist, 3.0));
+
+        /* "treecode.pyx":245
+ * 
+ *                 acc_mul = G * particle_array[node.start_index,3]/(dist**3)
+ *                 acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul             # <<<<<<<<<<<<<<
+ *                 acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+ *                 acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
+ */
+        __pyx_t_13 = __pyx_v_node.start_index;
+        __pyx_t_14 = 0;
+        __pyx_t_12 = __pyx_v_pos_idx;
+        __pyx_t_11 = 0;
+        __pyx_t_10 = __pyx_v_idx;
+        __pyx_t_9 = 0;
+        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_10 * __pyx_v_acc.strides[0]) ) + __pyx_t_9 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_13 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) ) + __pyx_t_11 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+        /* "treecode.pyx":246
+ *                 acc_mul = G * particle_array[node.start_index,3]/(dist**3)
+ *                 acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
+ *                 acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul             # <<<<<<<<<<<<<<
+ *                 acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
+ *                 phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+ */
+        __pyx_t_11 = __pyx_v_node.start_index;
+        __pyx_t_12 = 1;
+        __pyx_t_14 = __pyx_v_pos_idx;
+        __pyx_t_13 = 1;
+        __pyx_t_9 = __pyx_v_idx;
+        __pyx_t_10 = 1;
+        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_9 * __pyx_v_acc.strides[0]) ) + __pyx_t_10 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_12 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_14 * __pyx_v_pos.strides[0]) ) + __pyx_t_13 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+        /* "treecode.pyx":247
+ *                 acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
+ *                 acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+ *                 acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul             # <<<<<<<<<<<<<<
+ *                 phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+ * 
+ */
+        __pyx_t_13 = __pyx_v_node.start_index;
+        __pyx_t_14 = 2;
+        __pyx_t_12 = __pyx_v_pos_idx;
+        __pyx_t_11 = 2;
+        __pyx_t_10 = __pyx_v_idx;
+        __pyx_t_9 = 2;
+        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_10 * __pyx_v_acc.strides[0]) ) + __pyx_t_9 * __pyx_v_acc.strides[1]) )) += (((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_13 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) ))) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) ) + __pyx_t_11 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+        /* "treecode.pyx":248
+ *                 acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+ *                 acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
+ *                 phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist             # <<<<<<<<<<<<<<
+ * 
+ *         else:
+ */
+        __pyx_t_11 = __pyx_v_node.start_index;
+        __pyx_t_12 = 3;
+        __pyx_t_14 = __pyx_v_idx;
+        *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_14 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_12 * __pyx_v_particle_array.strides[1]) )))) / __pyx_v_dist);
+
+        /* "treecode.pyx":240
+ *             dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
+ * 
+ *             if dist != 0:             # <<<<<<<<<<<<<<
  *                 if eps != 0:
  *                     dist = sqrt(dist**2 + eps**2)
- *                 acc_mul = G * node.mass/(dist**3)             # <<<<<<<<<<<<<<
- *                 acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
- *                 acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
- */
-        __pyx_v_acc_mul = ((__pyx_v_G * __pyx_v_node.mass) / pow(__pyx_v_dist, 3.0));
-
-        /* "treecode.pyx":234
- *                     dist = sqrt(dist**2 + eps**2)
- *                 acc_mul = G * node.mass/(dist**3)
- *                 acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul             # <<<<<<<<<<<<<<
- *                 acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
- *                 acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
- */
-        __pyx_t_8 = __pyx_v_pos_idx;
-        __pyx_t_7 = 0;
-        __pyx_t_11 = __pyx_v_idx;
-        __pyx_t_12 = 0;
-        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_11 * __pyx_v_acc.strides[0]) ) + __pyx_t_12 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[0]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_8 * __pyx_v_pos.strides[0]) ) + __pyx_t_7 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
-
-        /* "treecode.pyx":235
- *                 acc_mul = G * node.mass/(dist**3)
- *                 acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
- *                 acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul             # <<<<<<<<<<<<<<
- *                 acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
- *                 phi[idx] += (-1) * G * node.mass/dist
- */
-        __pyx_t_7 = __pyx_v_pos_idx;
-        __pyx_t_8 = 1;
-        __pyx_t_12 = __pyx_v_idx;
-        __pyx_t_11 = 1;
-        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_12 * __pyx_v_acc.strides[0]) ) + __pyx_t_11 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[1]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_7 * __pyx_v_pos.strides[0]) ) + __pyx_t_8 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
-
-        /* "treecode.pyx":236
- *                 acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
- *                 acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
- *                 acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul             # <<<<<<<<<<<<<<
- *                 phi[idx] += (-1) * G * node.mass/dist
- *                 return
- */
-        __pyx_t_8 = __pyx_v_pos_idx;
-        __pyx_t_7 = 2;
-        __pyx_t_11 = __pyx_v_idx;
-        __pyx_t_12 = 2;
-        *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_11 * __pyx_v_acc.strides[0]) ) + __pyx_t_12 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[2]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_8 * __pyx_v_pos.strides[0]) ) + __pyx_t_7 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
-
-        /* "treecode.pyx":237
- *                 acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
- *                 acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
- *                 phi[idx] += (-1) * G * node.mass/dist             # <<<<<<<<<<<<<<
- *                 return
- * 
- */
-        __pyx_t_7 = __pyx_v_idx;
-        *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_7 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * __pyx_v_node.mass) / __pyx_v_dist);
-
-        /* "treecode.pyx":238
- *                 acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
- *                 phi[idx] += (-1) * G * node.mass/dist
- *                 return             # <<<<<<<<<<<<<<
- * 
- *         for i in range(8):
- */
-        goto __pyx_L0;
-
-        /* "treecode.pyx":229
- * 
- *         if dist != 0:
- *             if node.size**3/dist <= theta:             # <<<<<<<<<<<<<<
- *                 truncations[0] += 1
- *                 if eps != 0:
  */
       }
 
-      /* "treecode.pyx":228
- *         dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
- * 
- *         if dist != 0:             # <<<<<<<<<<<<<<
- *             if node.size**3/dist <= theta:
- *                 truncations[0] += 1
+      /* "treecode.pyx":234
+ *             queue = queue.prev[0]
+ *             length -= 1
+ *         elif node.n_particles == 1:             # <<<<<<<<<<<<<<
+ *             queue = queue.prev[0]
+ *             length -= 1
  */
-    }
+      break;
+      default:
 
-    /* "treecode.pyx":240
- *                 return
+      /* "treecode.pyx":251
  * 
- *         for i in range(8):             # <<<<<<<<<<<<<<
- *             traverse(node.children[i],particle_array,pos,pos_idx,G,eps,theta,acc,phi,idx,truncations)
+ *         else:
+ *             queue = queue.prev[0]             # <<<<<<<<<<<<<<
+ *             length -= 1
  * 
  */
-    for (__pyx_t_14 = 0; __pyx_t_14 < 8; __pyx_t_14+=1) {
-      __pyx_v_i = __pyx_t_14;
+      __pyx_v_queue = (__pyx_v_queue.prev[0]);
 
-      /* "treecode.pyx":241
+      /* "treecode.pyx":252
+ *         else:
+ *             queue = queue.prev[0]
+ *             length -= 1             # <<<<<<<<<<<<<<
  * 
- *         for i in range(8):
- *             traverse(node.children[i],particle_array,pos,pos_idx,G,eps,theta,acc,phi,idx,truncations)             # <<<<<<<<<<<<<<
+ *             dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
+ */
+      __pyx_v_length = (__pyx_v_length - 1);
+
+      /* "treecode.pyx":254
+ *             length -= 1
+ * 
+ *             dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)             # <<<<<<<<<<<<<<
+ * 
+ *             if dist != 0:
+ */
+      __pyx_t_12 = __pyx_v_pos_idx;
+      __pyx_t_11 = 0;
+      __pyx_t_14 = __pyx_v_pos_idx;
+      __pyx_t_13 = 1;
+      __pyx_t_9 = __pyx_v_pos_idx;
+      __pyx_t_10 = 2;
+      __pyx_v_dist = sqrt(((pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_12 * __pyx_v_pos.strides[0]) ) + __pyx_t_11 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[0])), 2.0) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_14 * __pyx_v_pos.strides[0]) ) + __pyx_t_13 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[1])), 2.0)) + pow(((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_9 * __pyx_v_pos.strides[0]) ) + __pyx_t_10 * __pyx_v_pos.strides[1]) ))) - (__pyx_v_node.center[2])), 2.0)));
+
+      /* "treecode.pyx":256
+ *             dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
+ * 
+ *             if dist != 0:             # <<<<<<<<<<<<<<
+ *                 if node.size**3/dist <= theta:
+ *                     truncations[0] += 1
+ */
+      __pyx_t_1 = ((__pyx_v_dist != 0.0) != 0);
+      if (__pyx_t_1) {
+
+        /* "treecode.pyx":257
+ * 
+ *             if dist != 0:
+ *                 if node.size**3/dist <= theta:             # <<<<<<<<<<<<<<
+ *                     truncations[0] += 1
+ *                     if eps != 0:
+ */
+        __pyx_t_1 = (((pow(__pyx_v_node.size, 3.0) / __pyx_v_dist) <= __pyx_v_theta) != 0);
+        if (__pyx_t_1) {
+
+          /* "treecode.pyx":258
+ *             if dist != 0:
+ *                 if node.size**3/dist <= theta:
+ *                     truncations[0] += 1             # <<<<<<<<<<<<<<
+ *                     if eps != 0:
+ *                         dist = sqrt(dist**2 + eps**2)
+ */
+          __pyx_t_15 = 0;
+          (__pyx_v_truncations[__pyx_t_15]) = ((__pyx_v_truncations[__pyx_t_15]) + 1);
+
+          /* "treecode.pyx":259
+ *                 if node.size**3/dist <= theta:
+ *                     truncations[0] += 1
+ *                     if eps != 0:             # <<<<<<<<<<<<<<
+ *                         dist = sqrt(dist**2 + eps**2)
+ *                     acc_mul = G * node.mass/(dist**3)
+ */
+          __pyx_t_1 = ((__pyx_v_eps != 0.0) != 0);
+          if (__pyx_t_1) {
+
+            /* "treecode.pyx":260
+ *                     truncations[0] += 1
+ *                     if eps != 0:
+ *                         dist = sqrt(dist**2 + eps**2)             # <<<<<<<<<<<<<<
+ *                     acc_mul = G * node.mass/(dist**3)
+ *                     acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+ */
+            __pyx_v_dist = sqrt((pow(__pyx_v_dist, 2.0) + pow(__pyx_v_eps, 2.0)));
+
+            /* "treecode.pyx":259
+ *                 if node.size**3/dist <= theta:
+ *                     truncations[0] += 1
+ *                     if eps != 0:             # <<<<<<<<<<<<<<
+ *                         dist = sqrt(dist**2 + eps**2)
+ *                     acc_mul = G * node.mass/(dist**3)
+ */
+          }
+
+          /* "treecode.pyx":261
+ *                     if eps != 0:
+ *                         dist = sqrt(dist**2 + eps**2)
+ *                     acc_mul = G * node.mass/(dist**3)             # <<<<<<<<<<<<<<
+ *                     acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+ *                     acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+ */
+          __pyx_v_acc_mul = ((__pyx_v_G * __pyx_v_node.mass) / pow(__pyx_v_dist, 3.0));
+
+          /* "treecode.pyx":262
+ *                         dist = sqrt(dist**2 + eps**2)
+ *                     acc_mul = G * node.mass/(dist**3)
+ *                     acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul             # <<<<<<<<<<<<<<
+ *                     acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+ *                     acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
+ */
+          __pyx_t_10 = __pyx_v_pos_idx;
+          __pyx_t_9 = 0;
+          __pyx_t_13 = __pyx_v_idx;
+          __pyx_t_14 = 0;
+          *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_13 * __pyx_v_acc.strides[0]) ) + __pyx_t_14 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[0]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) ) + __pyx_t_9 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+          /* "treecode.pyx":263
+ *                     acc_mul = G * node.mass/(dist**3)
+ *                     acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+ *                     acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul             # <<<<<<<<<<<<<<
+ *                     acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
+ *                     phi[idx] += (-1) * G * node.mass/dist
+ */
+          __pyx_t_9 = __pyx_v_pos_idx;
+          __pyx_t_10 = 1;
+          __pyx_t_14 = __pyx_v_idx;
+          __pyx_t_13 = 1;
+          *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_14 * __pyx_v_acc.strides[0]) ) + __pyx_t_13 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[1]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_9 * __pyx_v_pos.strides[0]) ) + __pyx_t_10 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+          /* "treecode.pyx":264
+ *                     acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+ *                     acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+ *                     acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul             # <<<<<<<<<<<<<<
+ *                     phi[idx] += (-1) * G * node.mass/dist
+ *                 else:
+ */
+          __pyx_t_10 = __pyx_v_pos_idx;
+          __pyx_t_9 = 2;
+          __pyx_t_13 = __pyx_v_idx;
+          __pyx_t_14 = 2;
+          *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_acc.data + __pyx_t_13 * __pyx_v_acc.strides[0]) ) + __pyx_t_14 * __pyx_v_acc.strides[1]) )) += (((__pyx_v_node.center[2]) - (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_pos.data + __pyx_t_10 * __pyx_v_pos.strides[0]) ) + __pyx_t_9 * __pyx_v_pos.strides[1]) )))) * __pyx_v_acc_mul);
+
+          /* "treecode.pyx":265
+ *                     acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+ *                     acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
+ *                     phi[idx] += (-1) * G * node.mass/dist             # <<<<<<<<<<<<<<
+ *                 else:
+ *                     for i in range(8):
+ */
+          __pyx_t_9 = __pyx_v_idx;
+          *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_9 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * __pyx_v_node.mass) / __pyx_v_dist);
+
+          /* "treecode.pyx":257
+ * 
+ *             if dist != 0:
+ *                 if node.size**3/dist <= theta:             # <<<<<<<<<<<<<<
+ *                     truncations[0] += 1
+ *                     if eps != 0:
+ */
+          goto __pyx_L8;
+        }
+
+        /* "treecode.pyx":267
+ *                     phi[idx] += (-1) * G * node.mass/dist
+ *                 else:
+ *                     for i in range(8):             # <<<<<<<<<<<<<<
+ *                         if node.children[i].n_particles != 0:
+ *                             next_queue = ret_queue(node.children[i])
+ */
+        /*else*/ {
+          for (__pyx_t_16 = 0; __pyx_t_16 < 8; __pyx_t_16+=1) {
+            __pyx_v_i = __pyx_t_16;
+
+            /* "treecode.pyx":268
+ *                 else:
+ *                     for i in range(8):
+ *                         if node.children[i].n_particles != 0:             # <<<<<<<<<<<<<<
+ *                             next_queue = ret_queue(node.children[i])
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ */
+            __pyx_t_1 = (((__pyx_v_node.children[__pyx_v_i]).n_particles != 0) != 0);
+            if (__pyx_t_1) {
+
+              /* "treecode.pyx":269
+ *                     for i in range(8):
+ *                         if node.children[i].n_particles != 0:
+ *                             next_queue = ret_queue(node.children[i])             # <<<<<<<<<<<<<<
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                             next_queue.prev[0] = queue
+ */
+              __pyx_v_next_queue = __pyx_f_8treecode_ret_queue((__pyx_v_node.children[__pyx_v_i]));
+
+              /* "treecode.pyx":270
+ *                         if node.children[i].n_particles != 0:
+ *                             next_queue = ret_queue(node.children[i])
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))             # <<<<<<<<<<<<<<
+ *                             next_queue.prev[0] = queue
+ *                             queue = next_queue
+ */
+              __pyx_v_next_queue.prev = ((struct __pyx_t_8treecode_Queue *)malloc((sizeof(struct __pyx_t_8treecode_Queue))));
+
+              /* "treecode.pyx":271
+ *                             next_queue = ret_queue(node.children[i])
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                             next_queue.prev[0] = queue             # <<<<<<<<<<<<<<
+ *                             queue = next_queue
+ *                             length += 1
+ */
+              (__pyx_v_next_queue.prev[0]) = __pyx_v_queue;
+
+              /* "treecode.pyx":272
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                             next_queue.prev[0] = queue
+ *                             queue = next_queue             # <<<<<<<<<<<<<<
+ *                             length += 1
+ *             else:
+ */
+              __pyx_v_queue = __pyx_v_next_queue;
+
+              /* "treecode.pyx":273
+ *                             next_queue.prev[0] = queue
+ *                             queue = next_queue
+ *                             length += 1             # <<<<<<<<<<<<<<
+ *             else:
+ *                 for i in range(8):
+ */
+              __pyx_v_length = (__pyx_v_length + 1);
+
+              /* "treecode.pyx":268
+ *                 else:
+ *                     for i in range(8):
+ *                         if node.children[i].n_particles != 0:             # <<<<<<<<<<<<<<
+ *                             next_queue = ret_queue(node.children[i])
+ *                             next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ */
+            }
+          }
+        }
+        __pyx_L8:;
+
+        /* "treecode.pyx":256
+ *             dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
+ * 
+ *             if dist != 0:             # <<<<<<<<<<<<<<
+ *                 if node.size**3/dist <= theta:
+ *                     truncations[0] += 1
+ */
+        goto __pyx_L7;
+      }
+
+      /* "treecode.pyx":275
+ *                             length += 1
+ *             else:
+ *                 for i in range(8):             # <<<<<<<<<<<<<<
+ *                     if node.children[i].n_particles != 0:
+ *                         next_queue = ret_queue(node.children[i])
+ */
+      /*else*/ {
+        for (__pyx_t_16 = 0; __pyx_t_16 < 8; __pyx_t_16+=1) {
+          __pyx_v_i = __pyx_t_16;
+
+          /* "treecode.pyx":276
+ *             else:
+ *                 for i in range(8):
+ *                     if node.children[i].n_particles != 0:             # <<<<<<<<<<<<<<
+ *                         next_queue = ret_queue(node.children[i])
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ */
+          __pyx_t_1 = (((__pyx_v_node.children[__pyx_v_i]).n_particles != 0) != 0);
+          if (__pyx_t_1) {
+
+            /* "treecode.pyx":277
+ *                 for i in range(8):
+ *                     if node.children[i].n_particles != 0:
+ *                         next_queue = ret_queue(node.children[i])             # <<<<<<<<<<<<<<
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                         next_queue.prev[0] = queue
+ */
+            __pyx_v_next_queue = __pyx_f_8treecode_ret_queue((__pyx_v_node.children[__pyx_v_i]));
+
+            /* "treecode.pyx":278
+ *                     if node.children[i].n_particles != 0:
+ *                         next_queue = ret_queue(node.children[i])
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))             # <<<<<<<<<<<<<<
+ *                         next_queue.prev[0] = queue
+ *                         queue = next_queue
+ */
+            __pyx_v_next_queue.prev = ((struct __pyx_t_8treecode_Queue *)malloc((sizeof(struct __pyx_t_8treecode_Queue))));
+
+            /* "treecode.pyx":279
+ *                         next_queue = ret_queue(node.children[i])
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                         next_queue.prev[0] = queue             # <<<<<<<<<<<<<<
+ *                         queue = next_queue
+ *                         length += 1
+ */
+            (__pyx_v_next_queue.prev[0]) = __pyx_v_queue;
+
+            /* "treecode.pyx":280
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ *                         next_queue.prev[0] = queue
+ *                         queue = next_queue             # <<<<<<<<<<<<<<
+ *                         length += 1
+ * 
+ */
+            __pyx_v_queue = __pyx_v_next_queue;
+
+            /* "treecode.pyx":281
+ *                         next_queue.prev[0] = queue
+ *                         queue = next_queue
+ *                         length += 1             # <<<<<<<<<<<<<<
  * 
  * 
  */
-      __pyx_f_8treecode_traverse((__pyx_v_node.children[__pyx_v_i]), __pyx_v_particle_array, __pyx_v_pos, __pyx_v_pos_idx, __pyx_v_G, __pyx_v_eps, __pyx_v_theta, __pyx_v_acc, __pyx_v_phi, __pyx_v_idx, __pyx_v_truncations);
+            __pyx_v_length = (__pyx_v_length + 1);
+
+            /* "treecode.pyx":276
+ *             else:
+ *                 for i in range(8):
+ *                     if node.children[i].n_particles != 0:             # <<<<<<<<<<<<<<
+ *                         next_queue = ret_queue(node.children[i])
+ *                         next_queue.prev = <Queue *>malloc(sizeof(Queue))
+ */
+          }
+        }
+      }
+      __pyx_L7:;
+      break;
     }
-    break;
   }
 
-  /* "treecode.pyx":203
+  /* "treecode.pyx":213
  * @cython.cdivision(True)
  * @cython.nonecheck(False)
- * cdef void traverse(Node node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:             # <<<<<<<<<<<<<<
+ * cdef void traverse(Node base_node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:             # <<<<<<<<<<<<<<
  * 
- *     cdef double acc_mul
+ *     cdef Queue zeroth
  */
 
   /* function exit code */
-  __pyx_L0:;
 }
 
-/* "treecode.pyx":247
+/* "treecode.pyx":287
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):             # <<<<<<<<<<<<<<
@@ -4628,7 +4912,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     }
   }
 
-  /* "treecode.pyx":248
+  /* "treecode.pyx":288
  * @cython.cdivision(True)
  * cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):
  *     cdef Py_ssize_t n_particles = particles.shape[0]             # <<<<<<<<<<<<<<
@@ -4637,7 +4921,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
   __pyx_v_n_particles = (__pyx_v_particles.shape[0]);
 
-  /* "treecode.pyx":250
+  /* "treecode.pyx":290
  *     cdef Py_ssize_t n_particles = particles.shape[0]
  * 
  *     cdef double radius = 0             # <<<<<<<<<<<<<<
@@ -4646,21 +4930,21 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
   __pyx_v_radius = 0.0;
 
-  /* "treecode.pyx":252
+  /* "treecode.pyx":292
  *     cdef double radius = 0
  * 
  *     cdef double[:,:] particle_array = np.zeros((n_particles,4),dtype=float)             # <<<<<<<<<<<<<<
  *     cdef int[:] indexes = np.zeros(n_particles,dtype=np.int32)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_1, __pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -4668,65 +4952,65 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   __Pyx_GIVEREF(__pyx_int_4);
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_4);
   __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 252, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 252, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 292, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(__pyx_t_4, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 252, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(__pyx_t_4, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 292, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_particle_array = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "treecode.pyx":253
+  /* "treecode.pyx":293
  * 
  *     cdef double[:,:] particle_array = np.zeros((n_particles,4),dtype=float)
  *     cdef int[:] indexes = np.zeros(n_particles,dtype=np.int32)             # <<<<<<<<<<<<<<
  * 
  *     cdef int i
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_4, __pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_4 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
   __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_2, __pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_int32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_int32); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 253, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_6) < 0) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(__pyx_t_6, PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_to_MemoryviewSlice_ds_int(__pyx_t_6, PyBUF_WRITABLE); if (unlikely(!__pyx_t_7.memview)) __PYX_ERR(0, 293, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __pyx_v_indexes = __pyx_t_7;
   __pyx_t_7.memview = NULL;
   __pyx_t_7.data = NULL;
 
-  /* "treecode.pyx":256
+  /* "treecode.pyx":296
  * 
  *     cdef int i
  *     for i in range(n_particles):             # <<<<<<<<<<<<<<
@@ -4738,7 +5022,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
     __pyx_v_i = __pyx_t_10;
 
-    /* "treecode.pyx":257
+    /* "treecode.pyx":297
  *     cdef int i
  *     for i in range(n_particles):
  *         particle_array[i,0] = particles[i,0]             # <<<<<<<<<<<<<<
@@ -4751,7 +5035,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_14 = 0;
     *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_13 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) )) = (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_11 * __pyx_v_particles.strides[0]) ) + __pyx_t_12 * __pyx_v_particles.strides[1]) )));
 
-    /* "treecode.pyx":258
+    /* "treecode.pyx":298
  *     for i in range(n_particles):
  *         particle_array[i,0] = particles[i,0]
  *         particle_array[i,1] = particles[i,1]             # <<<<<<<<<<<<<<
@@ -4764,7 +5048,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_13 = 1;
     *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_14 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_13 * __pyx_v_particle_array.strides[1]) )) = (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_12 * __pyx_v_particles.strides[0]) ) + __pyx_t_11 * __pyx_v_particles.strides[1]) )));
 
-    /* "treecode.pyx":259
+    /* "treecode.pyx":299
  *         particle_array[i,0] = particles[i,0]
  *         particle_array[i,1] = particles[i,1]
  *         particle_array[i,2] = particles[i,2]             # <<<<<<<<<<<<<<
@@ -4777,7 +5061,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_14 = 2;
     *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_13 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) )) = (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_11 * __pyx_v_particles.strides[0]) ) + __pyx_t_12 * __pyx_v_particles.strides[1]) )));
 
-    /* "treecode.pyx":261
+    /* "treecode.pyx":301
  *         particle_array[i,2] = particles[i,2]
  * 
  *         if fabs(particles[i,0]) > radius:             # <<<<<<<<<<<<<<
@@ -4789,7 +5073,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_15 = ((fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_12 * __pyx_v_particles.strides[0]) ) + __pyx_t_11 * __pyx_v_particles.strides[1]) )))) > __pyx_v_radius) != 0);
     if (__pyx_t_15) {
 
-      /* "treecode.pyx":262
+      /* "treecode.pyx":302
  * 
  *         if fabs(particles[i,0]) > radius:
  *             radius = fabs(particles[i,0])             # <<<<<<<<<<<<<<
@@ -4800,7 +5084,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
       __pyx_t_12 = 0;
       __pyx_v_radius = fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_11 * __pyx_v_particles.strides[0]) ) + __pyx_t_12 * __pyx_v_particles.strides[1]) ))));
 
-      /* "treecode.pyx":261
+      /* "treecode.pyx":301
  *         particle_array[i,2] = particles[i,2]
  * 
  *         if fabs(particles[i,0]) > radius:             # <<<<<<<<<<<<<<
@@ -4809,7 +5093,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
     }
 
-    /* "treecode.pyx":263
+    /* "treecode.pyx":303
  *         if fabs(particles[i,0]) > radius:
  *             radius = fabs(particles[i,0])
  *         if fabs(particles[i,1]) > radius:             # <<<<<<<<<<<<<<
@@ -4821,7 +5105,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_15 = ((fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_12 * __pyx_v_particles.strides[0]) ) + __pyx_t_11 * __pyx_v_particles.strides[1]) )))) > __pyx_v_radius) != 0);
     if (__pyx_t_15) {
 
-      /* "treecode.pyx":264
+      /* "treecode.pyx":304
  *             radius = fabs(particles[i,0])
  *         if fabs(particles[i,1]) > radius:
  *             radius = fabs(particles[i,1])             # <<<<<<<<<<<<<<
@@ -4832,7 +5116,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
       __pyx_t_12 = 1;
       __pyx_v_radius = fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_11 * __pyx_v_particles.strides[0]) ) + __pyx_t_12 * __pyx_v_particles.strides[1]) ))));
 
-      /* "treecode.pyx":263
+      /* "treecode.pyx":303
  *         if fabs(particles[i,0]) > radius:
  *             radius = fabs(particles[i,0])
  *         if fabs(particles[i,1]) > radius:             # <<<<<<<<<<<<<<
@@ -4841,7 +5125,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
     }
 
-    /* "treecode.pyx":265
+    /* "treecode.pyx":305
  *         if fabs(particles[i,1]) > radius:
  *             radius = fabs(particles[i,1])
  *         if fabs(particles[i,2]) > radius:             # <<<<<<<<<<<<<<
@@ -4853,7 +5137,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     __pyx_t_15 = ((fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_12 * __pyx_v_particles.strides[0]) ) + __pyx_t_11 * __pyx_v_particles.strides[1]) )))) > __pyx_v_radius) != 0);
     if (__pyx_t_15) {
 
-      /* "treecode.pyx":266
+      /* "treecode.pyx":306
  *             radius = fabs(particles[i,1])
  *         if fabs(particles[i,2]) > radius:
  *             radius = fabs(particles[i,2])             # <<<<<<<<<<<<<<
@@ -4864,7 +5148,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
       __pyx_t_12 = 2;
       __pyx_v_radius = fabs((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particles.data + __pyx_t_11 * __pyx_v_particles.strides[0]) ) + __pyx_t_12 * __pyx_v_particles.strides[1]) ))));
 
-      /* "treecode.pyx":265
+      /* "treecode.pyx":305
  *         if fabs(particles[i,1]) > radius:
  *             radius = fabs(particles[i,1])
  *         if fabs(particles[i,2]) > radius:             # <<<<<<<<<<<<<<
@@ -4873,7 +5157,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
     }
 
-    /* "treecode.pyx":268
+    /* "treecode.pyx":308
  *             radius = fabs(particles[i,2])
  * 
  *         particle_array[i,3] = masses[i]             # <<<<<<<<<<<<<<
@@ -4886,7 +5170,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
     *((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_particle_array.data + __pyx_t_11 * __pyx_v_particle_array.strides[0]) ) + __pyx_t_14 * __pyx_v_particle_array.strides[1]) )) = (*((double *) ( /* dim=0 */ (__pyx_v_masses.data + __pyx_t_12 * __pyx_v_masses.strides[0]) )));
   }
 
-  /* "treecode.pyx":270
+  /* "treecode.pyx":310
  *         particle_array[i,3] = masses[i]
  * 
  *     radius = radius * 1.01             # <<<<<<<<<<<<<<
@@ -4895,7 +5179,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
   __pyx_v_radius = (__pyx_v_radius * 1.01);
 
-  /* "treecode.pyx":272
+  /* "treecode.pyx":312
  *     radius = radius * 1.01
  * 
  *     cdef Node base_node = c_build_tree(radius,particle_array,indexes, n_particles)             # <<<<<<<<<<<<<<
@@ -4904,21 +5188,21 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
   __pyx_v_base_node = __pyx_f_8treecode_c_build_tree(__pyx_v_radius, __pyx_v_particle_array, __pyx_v_indexes, __pyx_v_n_particles);
 
-  /* "treecode.pyx":274
+  /* "treecode.pyx":314
  *     cdef Node base_node = c_build_tree(radius,particle_array,indexes, n_particles)
  * 
  *     cdef double[:,:] current_part_acc = np.zeros((n_particles,3),dtype=float)             # <<<<<<<<<<<<<<
  *     cdef double[:] current_part_phi = np.zeros((n_particles),dtype=float)
  * 
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_np); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_zeros); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_6 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_6);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_6);
@@ -4926,59 +5210,59 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   __Pyx_GIVEREF(__pyx_int_3);
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_int_3);
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
   __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 274, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 274, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 314, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_6, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 274, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(__pyx_t_3, PyBUF_WRITABLE); if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 314, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_current_part_acc = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "treecode.pyx":275
+  /* "treecode.pyx":315
  * 
  *     cdef double[:,:] current_part_acc = np.zeros((n_particles,3),dtype=float)
  *     cdef double[:] current_part_phi = np.zeros((n_particles),dtype=float)             # <<<<<<<<<<<<<<
  * 
  *     cdef int truncs = phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)
  */
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __pyx_t_3 = PyInt_FromSsize_t(__pyx_v_n_particles); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 275, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 275, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, ((PyObject *)(&PyFloat_Type))) < 0) __PYX_ERR(0, 315, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_16 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_4, PyBUF_WRITABLE); if (unlikely(!__pyx_t_16.memview)) __PYX_ERR(0, 275, __pyx_L1_error)
+  __pyx_t_16 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(__pyx_t_4, PyBUF_WRITABLE); if (unlikely(!__pyx_t_16.memview)) __PYX_ERR(0, 315, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_current_part_phi = __pyx_t_16;
   __pyx_t_16.memview = NULL;
   __pyx_t_16.data = NULL;
 
-  /* "treecode.pyx":277
+  /* "treecode.pyx":317
  *     cdef double[:] current_part_phi = np.zeros((n_particles),dtype=float)
  * 
  *     cdef int truncs = phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)             # <<<<<<<<<<<<<<
@@ -4987,18 +5271,18 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
  */
   __pyx_v_truncs = __pyx_f_8treecode_phi_acc(__pyx_v_base_node, __pyx_v_particle_array, __pyx_v_particles, __pyx_v_G, __pyx_v_eps, __pyx_v_theta, __pyx_v_current_part_acc, __pyx_v_current_part_phi);
 
-  /* "treecode.pyx":279
+  /* "treecode.pyx":319
  *     cdef int truncs = phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)
  * 
  *     return np.asarray(current_part_acc),np.asarray(current_part_phi),truncs             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_current_part_acc, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_current_part_acc, 2, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_1 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_6))) {
@@ -5013,15 +5297,15 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   __pyx_t_4 = (__pyx_t_1) ? __Pyx_PyObject_Call2Args(__pyx_t_6, __pyx_t_1, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_6, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 279, __pyx_L1_error)
+  if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_asarray); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_current_part_phi, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_3 = __pyx_memoryview_fromslice(__pyx_v_current_part_phi, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_2 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_1))) {
@@ -5036,12 +5320,12 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   __pyx_t_6 = (__pyx_t_2) ? __Pyx_PyObject_Call2Args(__pyx_t_1, __pyx_t_2, __pyx_t_3) : __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_3);
   __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 279, __pyx_L1_error)
+  if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_truncs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_truncs); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 279, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 319, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
@@ -5056,7 +5340,7 @@ static PyObject *__pyx_f_8treecode_evaluate(__Pyx_memviewslice __pyx_v_particles
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "treecode.pyx":247
+  /* "treecode.pyx":287
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):             # <<<<<<<<<<<<<<
@@ -5141,13 +5425,13 @@ static PyObject *__pyx_pw_8treecode_3evaluate(PyObject *__pyx_self, PyObject *__
         case  1:
         if (likely((values[1] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_velocities)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, 1); __PYX_ERR(0, 247, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, 1); __PYX_ERR(0, 287, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_masses)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, 2); __PYX_ERR(0, 247, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, 2); __PYX_ERR(0, 287, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
@@ -5187,7 +5471,7 @@ static PyObject *__pyx_pw_8treecode_3evaluate(PyObject *__pyx_self, PyObject *__
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "evaluate") < 0)) __PYX_ERR(0, 247, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "evaluate") < 0)) __PYX_ERR(0, 287, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -5210,44 +5494,44 @@ static PyObject *__pyx_pw_8treecode_3evaluate(PyObject *__pyx_self, PyObject *__
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_particles = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_particles.memview)) __PYX_ERR(0, 247, __pyx_L3_error)
-    __pyx_v_velocities = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[1], PyBUF_WRITABLE); if (unlikely(!__pyx_v_velocities.memview)) __PYX_ERR(0, 247, __pyx_L3_error)
-    __pyx_v_masses = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2], PyBUF_WRITABLE); if (unlikely(!__pyx_v_masses.memview)) __PYX_ERR(0, 247, __pyx_L3_error)
+    __pyx_v_particles = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0], PyBUF_WRITABLE); if (unlikely(!__pyx_v_particles.memview)) __PYX_ERR(0, 287, __pyx_L3_error)
+    __pyx_v_velocities = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[1], PyBUF_WRITABLE); if (unlikely(!__pyx_v_velocities.memview)) __PYX_ERR(0, 287, __pyx_L3_error)
+    __pyx_v_masses = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2], PyBUF_WRITABLE); if (unlikely(!__pyx_v_masses.memview)) __PYX_ERR(0, 287, __pyx_L3_error)
     if (values[3]) {
-      __pyx_v_eval_pos = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3], PyBUF_WRITABLE); if (unlikely(!__pyx_v_eval_pos.memview)) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_eval_pos = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[3], PyBUF_WRITABLE); if (unlikely(!__pyx_v_eval_pos.memview)) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_eval_pos = __pyx_k__6;
       __PYX_INC_MEMVIEW(&__pyx_v_eval_pos, 1);
     }
     if (values[4]) {
-      __pyx_v_steps = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_steps == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_steps = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_steps == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_steps = ((int)0);
     }
     if (values[5]) {
-      __pyx_v_eps = __pyx_PyFloat_AsDouble(values[5]); if (unlikely((__pyx_v_eps == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_eps = __pyx_PyFloat_AsDouble(values[5]); if (unlikely((__pyx_v_eps == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_eps = ((double)0.0);
     }
     if (values[6]) {
-      __pyx_v_G = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_G == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_G = __pyx_PyFloat_AsDouble(values[6]); if (unlikely((__pyx_v_G == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_G = ((double)6.6743e-11);
     }
     if (values[7]) {
-      __pyx_v_dt = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_dt == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_dt = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_dt == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_dt = ((double)1000.0);
     }
     if (values[8]) {
-      __pyx_v_theta = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_theta == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 247, __pyx_L3_error)
+      __pyx_v_theta = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_theta == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 287, __pyx_L3_error)
     } else {
       __pyx_v_theta = ((double)0.0);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 247, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("evaluate", 0, 3, 9, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 287, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("treecode.evaluate", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5270,10 +5554,10 @@ static PyObject *__pyx_pf_8treecode_2evaluate(CYTHON_UNUSED PyObject *__pyx_self
   int __pyx_clineno = 0;
   __Pyx_RefNannySetupContext("evaluate", 0);
   __Pyx_XDECREF(__pyx_r);
-  if (unlikely(!__pyx_v_particles.memview)) { __Pyx_RaiseUnboundLocalError("particles"); __PYX_ERR(0, 247, __pyx_L1_error) }
-  if (unlikely(!__pyx_v_velocities.memview)) { __Pyx_RaiseUnboundLocalError("velocities"); __PYX_ERR(0, 247, __pyx_L1_error) }
-  if (unlikely(!__pyx_v_masses.memview)) { __Pyx_RaiseUnboundLocalError("masses"); __PYX_ERR(0, 247, __pyx_L1_error) }
-  if (unlikely(!__pyx_v_eval_pos.memview)) { __Pyx_RaiseUnboundLocalError("eval_pos"); __PYX_ERR(0, 247, __pyx_L1_error) }
+  if (unlikely(!__pyx_v_particles.memview)) { __Pyx_RaiseUnboundLocalError("particles"); __PYX_ERR(0, 287, __pyx_L1_error) }
+  if (unlikely(!__pyx_v_velocities.memview)) { __Pyx_RaiseUnboundLocalError("velocities"); __PYX_ERR(0, 287, __pyx_L1_error) }
+  if (unlikely(!__pyx_v_masses.memview)) { __Pyx_RaiseUnboundLocalError("masses"); __PYX_ERR(0, 287, __pyx_L1_error) }
+  if (unlikely(!__pyx_v_eval_pos.memview)) { __Pyx_RaiseUnboundLocalError("eval_pos"); __PYX_ERR(0, 287, __pyx_L1_error) }
   __pyx_t_2.__pyx_n = 6;
   __pyx_t_2.eval_pos = __pyx_v_eval_pos;
   __pyx_t_2.steps = __pyx_v_steps;
@@ -5281,7 +5565,7 @@ static PyObject *__pyx_pf_8treecode_2evaluate(CYTHON_UNUSED PyObject *__pyx_self
   __pyx_t_2.G = __pyx_v_G;
   __pyx_t_2.dt = __pyx_v_dt;
   __pyx_t_2.theta = __pyx_v_theta;
-  __pyx_t_1 = __pyx_f_8treecode_evaluate(__pyx_v_particles, __pyx_v_velocities, __pyx_v_masses, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 247, __pyx_L1_error)
+  __pyx_t_1 = __pyx_f_8treecode_evaluate(__pyx_v_particles, __pyx_v_velocities, __pyx_v_masses, 0, &__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 287, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -19941,18 +20225,18 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "treecode.pyx":247
+  /* "treecode.pyx":287
  * @cython.wraparound(False)
  * @cython.cdivision(True)
  * cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):             # <<<<<<<<<<<<<<
  *     cdef Py_ssize_t n_particles = particles.shape[0]
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(Py_None, PyBUF_WRITABLE); if (unlikely(!__pyx_t_3.memview)) __PYX_ERR(0, 247, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(Py_None, PyBUF_WRITABLE); if (unlikely(!__pyx_t_3.memview)) __PYX_ERR(0, 287, __pyx_L1_error)
   __pyx_k__6 = __pyx_t_3;
   __pyx_t_3.memview = NULL;
   __pyx_t_3.data = NULL;
-  __pyx_t_3 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(Py_None, PyBUF_WRITABLE); if (unlikely(!__pyx_t_3.memview)) __PYX_ERR(0, 247, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(Py_None, PyBUF_WRITABLE); if (unlikely(!__pyx_t_3.memview)) __PYX_ERR(0, 287, __pyx_L1_error)
   __pyx_k__6 = __pyx_t_3;
   __pyx_t_3.memview = NULL;
   __pyx_t_3.data = NULL;

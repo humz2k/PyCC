@@ -135,7 +135,7 @@ cdef Node c_build_tree(double size, double[:,:] particle_array, int[:] indexes, 
 
     return base_node
 
-cdef Node ret_node():
+cdef Node ret_node() nogil:
     cdef Node out
     out.size = 0
     return out
@@ -196,49 +196,89 @@ cdef int phi_acc(Node base_node, double[:,:] particle_array, double[:,:] pos, do
         traverse(base_node,particle_array,pos,pos_idx,G,eps,theta,acc,phi,pos_idx,&truncations)
     return truncations
 
+cdef struct Queue:
+    Node node
+    Queue *prev
+
+cdef Queue ret_queue(Node node) nogil:
+    cdef Queue ret
+    ret.node = node
+    return ret
+
+#DO FREES
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void traverse(Node node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:
+cdef void traverse(Node base_node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:
 
+    cdef Queue zeroth
+    zeroth.node = ret_node()
+
+    cdef Queue queue
+    cdef Queue next_queue
+    queue.node = base_node
+    queue.prev = &zeroth
+    cdef int length = 1
+    cdef Node node
+    cdef int i
+    cdef double dist
     cdef double acc_mul
-    
-    if node.n_particles == 1:
-        dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
 
-        if dist != 0:
-            if eps != 0:
-                dist = sqrt(dist**2 + eps**2)
-            
-            acc_mul = G * particle_array[node.start_index,3]/(dist**3)
-            acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
-            acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
-            acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
-            phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+    while length != 0:
+        node = queue.node
 
-        return
+        if node.n_particles == 0:
+            queue = queue.prev[0]
+            length -= 1
+        elif node.n_particles == 1:
+            queue = queue.prev[0]
+            length -= 1
 
-    elif node.n_particles == 0:
-        return
+            dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
 
-    else:
-        dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
-    
-        if dist != 0:
-            if node.size**3/dist <= theta:
-                truncations[0] += 1
+            if dist != 0:
                 if eps != 0:
                     dist = sqrt(dist**2 + eps**2)
-                acc_mul = G * node.mass/(dist**3)
-                acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
-                acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
-                acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
-                phi[idx] += (-1) * G * node.mass/dist
-                return
+                
+                acc_mul = G * particle_array[node.start_index,3]/(dist**3)
+                acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
+                acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+                acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
+                phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+
+        else:
+            queue = queue.prev[0]
+            length -= 1
+
+            dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
     
-        for i in range(8):
-            traverse(node.children[i],particle_array,pos,pos_idx,G,eps,theta,acc,phi,idx,truncations)
+            if dist != 0:
+                if node.size**3/dist <= theta:
+                    truncations[0] += 1
+                    if eps != 0:
+                        dist = sqrt(dist**2 + eps**2)
+                    acc_mul = G * node.mass/(dist**3)
+                    acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+                    acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+                    acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
+                    phi[idx] += (-1) * G * node.mass/dist
+                else:
+                    for i in range(8):
+                        if node.children[i].n_particles != 0:
+                            next_queue = ret_queue(node.children[i])
+                            next_queue.prev = <Queue *>malloc(sizeof(Queue))
+                            next_queue.prev[0] = queue
+                            queue = next_queue
+                            length += 1
+            else:
+                for i in range(8):
+                    if node.children[i].n_particles != 0:
+                        next_queue = ret_queue(node.children[i])
+                        next_queue.prev = <Queue *>malloc(sizeof(Queue))
+                        next_queue.prev[0] = queue
+                        queue = next_queue
+                        length += 1
 
 
 @cython.boundscheck(False)
