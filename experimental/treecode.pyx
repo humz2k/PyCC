@@ -1,7 +1,8 @@
 import cython
 from cython.parallel import prange
 import numpy as np
-from libc.math cimport sqrt
+from libc.math cimport sqrt,fabs
+from libc.stdlib cimport malloc, free
 import time
 import pandas as pd
 from scipy import constants
@@ -60,47 +61,205 @@ cpdef double[:,:,:] divide_box(double[:,:] box):
 
     return new_boxes
 
-cpdef tuple separate_particles(double[:,:,:] boxes, double[:,:] particles, double[:] masses):
+cdef struct Node:
+    double* center
+    double size
+    int id
+    int start_index
+    int n_particles
+    double mass
+    Node* children
 
-    cdef list sorted_particles = []
-    cdef list sorted_masses = []
-
-    cdef Py_ssize_t n_particles = particles.shape[0]
-    cdef int[:] indexes = np.zeros((n_particles),dtype=np.int32)
-    cdef int[:] n_parts_in_box = np.zeros((8),dtype=np.int32)
-
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int[:,:] sort_particles(double[:,:,:] boxes, int start_index, int id, Py_ssize_t n_particles, double[:,:] particle_array, int[:] indexes):
     cdef int i
     cdef int box
-    for i in range(n_particles):
+    cdef int total_parts = 0
+    cdef int[:] n_parts_in_box = np.zeros((8),dtype=np.int32)
+    cdef int[:] sort_array = np.zeros((8),dtype=np.int32)
+    cdef int[:,:] info = np.zeros((8,2),dtype=np.int32)
+
+    for i in range(start_index,n_particles):
+        if indexes[i] != id:
+            break
         for box in range(8):
-            if (particles[i,0] >= boxes[box,0,0] and particles[i,0] <= boxes[box,0,1]) and (particles[i,1] >= boxes[box,1,0] and particles[i,1] <= boxes[box,1,1]) and (particles[i,2] >= boxes[box,2,0] and particles[i,2] <= boxes[box,2,1]):
-                indexes[i] = box
+            if (particle_array[i,0] >= boxes[box,0,0] and particle_array[i,0] <= boxes[box,0,1]) and (particle_array[i,1] >= boxes[box,1,0] and particle_array[i,1] <= boxes[box,1,1]) and (particle_array[i,2] >= boxes[box,2,0] and particle_array[i,2] <= boxes[box,2,1]):
+                indexes[i] += box + 1
                 n_parts_in_box[box] += 1
+                total_parts += 1
                 break
+    
+    for i in range(7):
+        sort_array[i+1] = n_parts_in_box[i] + sort_array[i]
+    
+    for i in range(8):
+        info[i,0] = sort_array[i] + start_index
+        info[i,1] = id + 1 + i
+    
+    cdef double[:,:] swap_array = np.zeros((total_parts,4),dtype=float)
+    cdef int[:] swap_index = np.zeros(total_parts,dtype=np.int32)
+
+    for i in range(start_index,start_index+total_parts):
+        box = sort_array[indexes[i] - 1 - id]
+        swap_array[box,0] = particle_array[i,0]
+        swap_array[box,1] = particle_array[i,1]
+        swap_array[box,2] = particle_array[i,2]
+        swap_array[box,3] = particle_array[i,3]
+        swap_index[box] = indexes[i]
+        sort_array[indexes[i] - 1 - id] += 1
+
+    for i in range(start_index,start_index+total_parts):
+        box = i - start_index
+        particle_array[i,0] = swap_array[box,0]
+        particle_array[i,1] = swap_array[box,1]
+        particle_array[i,2] = swap_array[box,2]
+        particle_array[i,3] = swap_array[box,3]
+        indexes[i] = swap_index[box]
+
+    return info
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef Node c_build_tree(double size, double[:,:] particle_array, int[:] indexes, Py_ssize_t n_particles):
+    cdef int[:,:] info
+
+    cdef double[:,:] box = np.array([[-size,size],[-size,size],[-size,size]],dtype=float)
+
+    cdef Node base_node = ret_node()
+
+    base_node = make_node(base_node,0,0,n_particles,box,particle_array,indexes)
+
+    return base_node
+
+cdef Node ret_node():
+    cdef Node out
+    out.size = 0
+    return out
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef Node make_node(Node node, int id, int start_index, Py_ssize_t n_particles, double[:,:] box, double[:,:] particle_array, int[:] indexes):
+    node.size = box[0,1] - box[0,0]
+    node.center = <double *> malloc(3 * sizeof(double))
+    node.center[0] = box[0,0] + node.size/2
+    node.center[1] = box[1,0] + node.size/2
+    node.center[2] = box[2,0] + node.size/2
+    node.id = id
+    node.mass = 0
+    node.n_particles = 0
+    node.start_index = start_index
+
+    cdef int i
+    for i in range(start_index,n_particles):
+        if indexes[i] != id:
+            break
+        node.mass += particle_array[i,3]
+        node.n_particles += 1
+    
+    if node.n_particles <= 1:
+        return node
+
+    cdef double[:,:,:] boxes = divide_box(box)
+
+    cdef int[:,:] info = sort_particles(boxes,start_index,id,n_particles,particle_array,indexes)
+
+    node.children = <Node *>malloc(8 * sizeof(Node))
 
     for i in range(8):
-        sorted_particles.append(np.zeros((n_parts_in_box[i],3),dtype=float))
-        sorted_masses.append(np.zeros((n_parts_in_box[i]),dtype=float))
+        node.children[i] = make_node(ret_node(),info[i,1],info[i,0],n_particles,boxes[i],particle_array,indexes)
     
-    cdef int temp
+    return node
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void phi_acc(Node base_node, double[:,:] particle_array, double[:,:] pos, double G, double eps, double theta, double[:,:] acc, double[:] phi):
+    cdef Py_ssize_t n_pos = pos.shape[0]
+    cdef int pos_idx
+    cdef int part_idx
+    cdef double acc_mul
+    cdef double dist
+
+    for pos_idx in range(n_pos):
+
+        acc[pos_idx,0] = 0
+        acc[pos_idx,1] = 0
+        acc[pos_idx,2] = 0
+        phi[pos_idx] = 0
+
+        traverse(base_node,particle_array,pos[pos_idx],G,eps,theta,acc,phi,pos_idx)
+
+cdef void traverse(Node node, double[:,:] particle_array, double[:] particle, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx):
+
+    cdef double acc_mul
+    
+    if node.n_particles == 1:
+        dist = sqrt((particle[0] - particle_array[node.start_index,0])**2 + (particle[1] - particle_array[node.start_index,1])**2 + (particle[2] - particle_array[node.start_index,2])**2)
+
+        if dist != 0:
+            if eps != 0:
+                dist = sqrt(dist**2 + eps**2)
+            
+            acc_mul = G * particle_array[node.start_index,3]/(dist**3)
+            acc[idx,0] += (particle_array[node.start_index,0] - particle[0]) * acc_mul
+            acc[idx,1] += (particle_array[node.start_index,1] - particle[1]) * acc_mul
+            acc[idx,2] += (particle_array[node.start_index,2] - particle[2]) * acc_mul
+            phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
+
+        return
+
+    dist = sqrt((particle[0] - node.center[0])**2 + (particle[1] - node.center[1])**2 + (particle[2] - node.center[2])**2)
+    if node.n_particles == 0:
+        return
+    
+    if dist != 0:
+        if pow(node.size,3)/dist <= theta:
+            if eps != 0:
+                dist = sqrt(dist**2 + eps**2)
+            acc_mul = G * node.mass/(dist**3)
+            acc[idx,0] += (node.center[0] - particle[0]) * acc_mul
+            acc[idx,1] += (node.center[1] - particle[1]) * acc_mul
+            acc[idx,2] += (node.center[2] - particle[2]) * acc_mul
+            phi[idx] += (-1) * G * node.mass/dist
+    
+    for i in range(8):
+        traverse(node.children[i],particle_array,particle,G,eps,theta,acc,phi,idx)
+
+cdef traverse(Node node, double[:,:]):
+    pass
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):
+    cdef Py_ssize_t n_particles = particles.shape[0]
+
+    cdef double radius = 0
+
+    cdef double[:,:] particle_array = np.zeros((n_particles,4),dtype=float)
+    cdef int[:] indexes = np.zeros(n_particles,dtype=np.int32)
+
+    cdef int i
     for i in range(n_particles):
-        n_parts_in_box[indexes[i]] -= 1
-        temp = n_parts_in_box[indexes[i]]
+        particle_array[i,0] = particles[i,0]
+        particle_array[i,1] = particles[i,1]
+        particle_array[i,2] = particles[i,2]
 
-        sorted_particles[indexes[i]][temp,0] = particles[i,0]
-        sorted_particles[indexes[i]][temp,1] = particles[i,1]
-        sorted_particles[indexes[i]][temp,2] = particles[i,2]
-        sorted_masses[indexes[i]][temp] = masses[i]
+        if fabs(particles[i,0]) > radius:
+            radius = fabs(particles[i,0])
+        if fabs(particles[i,1]) > radius:
+            radius = fabs(particles[i,1])
+        if fabs(particles[i,2]) > radius:
+            radius = fabs(particles[i,2])
+        
+        particle_array[i,3] = masses[i]
 
-    return sorted_particles,sorted_masses
+    radius = radius * 1.01
 
-cdef class Node:
-    cdef double[:] center
-    cdef double mass
-    cdef list children
+    cdef Node base_node = c_build_tree(radius,particle_array,indexes, n_particles)
 
-cpdef void build_tree():
-    cdef Node a = Node()
-    a.center = np.zeros((3),dtype=float)
-    a.mass = 10.
-    a.children = []
+    cdef double[:,:] current_part_acc = np.zeros((n_particles,3),dtype=float)
+    cdef double[:] current_part_phi = np.zeros((n_particles),dtype=float)
+
+    #phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)
+
+    return np.asarray(current_part_acc),np.asarray(current_part_phi)
