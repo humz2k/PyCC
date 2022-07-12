@@ -8,7 +8,7 @@ import time
 import sys
 # setting path
 sys.path.append('..')
-import PyCC.PyCC as PyCC
+import PyCCOld.PyCC as PyCC
 
 df = PyCC.Distributions.Uniform(10,1000,10)
 pos = df.loc[:,["x","y","z"]].to_numpy()

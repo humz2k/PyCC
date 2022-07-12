@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import sys
 # setting path
 sys.path.append('..')
-import PyCC.PyCC as PyCC
+import PyCCOld.PyCC as PyCC
 
 tree_time = []
 tree_time_n2 = []
