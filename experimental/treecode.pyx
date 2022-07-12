@@ -9,6 +9,7 @@ from scipy import constants
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
 cpdef double[:,:,:] divide_box(double[:,:] box):
 
     cdef double[:,:,:] new_boxes = np.zeros((8,3,2),dtype=float)
@@ -70,6 +71,7 @@ cdef struct Node:
     double mass
     Node* children
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef int[:,:] sort_particles(double[:,:,:] boxes, int start_index, int id, Py_ssize_t n_particles, double[:,:] particle_array, int[:] indexes):
@@ -84,8 +86,8 @@ cdef int[:,:] sort_particles(double[:,:,:] boxes, int start_index, int id, Py_ss
         if indexes[i] != id:
             break
         for box in range(8):
-            if (particle_array[i,0] >= boxes[box,0,0] and particle_array[i,0] <= boxes[box,0,1]) and (particle_array[i,1] >= boxes[box,1,0] and particle_array[i,1] <= boxes[box,1,1]) and (particle_array[i,2] >= boxes[box,2,0] and particle_array[i,2] <= boxes[box,2,1]):
-                indexes[i] += box + 1
+            if (particle_array[i,0] >= boxes[box,0,0] and particle_array[i,0] < boxes[box,0,1]) and (particle_array[i,1] >= boxes[box,1,0] and particle_array[i,1] < boxes[box,1,1]) and (particle_array[i,2] >= boxes[box,2,0] and particle_array[i,2] < boxes[box,2,1]):
+                indexes[i] += box + 1 + 8
                 n_parts_in_box[box] += 1
                 total_parts += 1
                 break
@@ -95,19 +97,19 @@ cdef int[:,:] sort_particles(double[:,:,:] boxes, int start_index, int id, Py_ss
     
     for i in range(8):
         info[i,0] = sort_array[i] + start_index
-        info[i,1] = id + 1 + i
+        info[i,1] = id + 1 + i + 8
     
     cdef double[:,:] swap_array = np.zeros((total_parts,4),dtype=float)
     cdef int[:] swap_index = np.zeros(total_parts,dtype=np.int32)
 
     for i in range(start_index,start_index+total_parts):
-        box = sort_array[indexes[i] - 1 - id]
+        box = sort_array[indexes[i] - 1 - 8 - id]
         swap_array[box,0] = particle_array[i,0]
         swap_array[box,1] = particle_array[i,1]
         swap_array[box,2] = particle_array[i,2]
         swap_array[box,3] = particle_array[i,3]
         swap_index[box] = indexes[i]
-        sort_array[indexes[i] - 1 - id] += 1
+        sort_array[indexes[i] - 1 - 8 - id] += 1
 
     for i in range(start_index,start_index+total_parts):
         box = i - start_index
@@ -119,6 +121,7 @@ cdef int[:,:] sort_particles(double[:,:,:] boxes, int start_index, int id, Py_ss
 
     return info
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef Node c_build_tree(double size, double[:,:] particle_array, int[:] indexes, Py_ssize_t n_particles):
@@ -137,6 +140,7 @@ cdef Node ret_node():
     out.size = 0
     return out
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef Node make_node(Node node, int id, int start_index, Py_ssize_t n_particles, double[:,:] box, double[:,:] particle_array, int[:] indexes):
@@ -173,63 +177,73 @@ cdef Node make_node(Node node, int id, int start_index, Py_ssize_t n_particles, 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef void phi_acc(Node base_node, double[:,:] particle_array, double[:,:] pos, double G, double eps, double theta, double[:,:] acc, double[:] phi):
+@cython.cdivision(True)
+cdef int phi_acc(Node base_node, double[:,:] particle_array, double[:,:] pos, double G, double eps, double theta, double[:,:] acc, double[:] phi):
     cdef Py_ssize_t n_pos = pos.shape[0]
     cdef int pos_idx
     cdef int part_idx
     cdef double acc_mul
     cdef double dist
+    cdef int truncations = 0
 
-    for pos_idx in range(n_pos):
+    for pos_idx in prange(n_pos,nogil=True):
 
         acc[pos_idx,0] = 0
         acc[pos_idx,1] = 0
         acc[pos_idx,2] = 0
         phi[pos_idx] = 0
 
-        traverse(base_node,particle_array,pos[pos_idx],G,eps,theta,acc,phi,pos_idx)
+        traverse(base_node,particle_array,pos,pos_idx,G,eps,theta,acc,phi,pos_idx,&truncations)
+    return truncations
 
-cdef void traverse(Node node, double[:,:] particle_array, double[:] particle, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+@cython.nonecheck(False)
+cdef void traverse(Node node, double[:,:] particle_array, double[:,:] pos, int pos_idx, double G, double eps, double theta, double[:,:] acc, double[:] phi, int idx, int* truncations) nogil:
 
     cdef double acc_mul
     
     if node.n_particles == 1:
-        dist = sqrt((particle[0] - particle_array[node.start_index,0])**2 + (particle[1] - particle_array[node.start_index,1])**2 + (particle[2] - particle_array[node.start_index,2])**2)
+        dist = sqrt((pos[pos_idx,0] - particle_array[node.start_index,0])**2 + (pos[pos_idx,1] - particle_array[node.start_index,1])**2 + (pos[pos_idx,2] - particle_array[node.start_index,2])**2)
 
         if dist != 0:
             if eps != 0:
                 dist = sqrt(dist**2 + eps**2)
             
             acc_mul = G * particle_array[node.start_index,3]/(dist**3)
-            acc[idx,0] += (particle_array[node.start_index,0] - particle[0]) * acc_mul
-            acc[idx,1] += (particle_array[node.start_index,1] - particle[1]) * acc_mul
-            acc[idx,2] += (particle_array[node.start_index,2] - particle[2]) * acc_mul
+            acc[idx,0] += (particle_array[node.start_index,0] - pos[pos_idx,0]) * acc_mul
+            acc[idx,1] += (particle_array[node.start_index,1] - pos[pos_idx,1]) * acc_mul
+            acc[idx,2] += (particle_array[node.start_index,2] - pos[pos_idx,2]) * acc_mul
             phi[idx] += (-1) * G * particle_array[node.start_index,3]/dist
 
         return
 
-    dist = sqrt((particle[0] - node.center[0])**2 + (particle[1] - node.center[1])**2 + (particle[2] - node.center[2])**2)
-    if node.n_particles == 0:
+    elif node.n_particles == 0:
         return
-    
-    if dist != 0:
-        if pow(node.size,3)/dist <= theta:
-            if eps != 0:
-                dist = sqrt(dist**2 + eps**2)
-            acc_mul = G * node.mass/(dist**3)
-            acc[idx,0] += (node.center[0] - particle[0]) * acc_mul
-            acc[idx,1] += (node.center[1] - particle[1]) * acc_mul
-            acc[idx,2] += (node.center[2] - particle[2]) * acc_mul
-            phi[idx] += (-1) * G * node.mass/dist
-    
-    for i in range(8):
-        traverse(node.children[i],particle_array,particle,G,eps,theta,acc,phi,idx)
 
-cdef traverse(Node node, double[:,:]):
-    pass
+    else:
+        dist = sqrt((pos[pos_idx,0] - node.center[0])**2 + (pos[pos_idx,1] - node.center[1])**2 + (pos[pos_idx,2] - node.center[2])**2)
+    
+        if dist != 0:
+            if node.size**3/dist <= theta:
+                truncations[0] += 1
+                if eps != 0:
+                    dist = sqrt(dist**2 + eps**2)
+                acc_mul = G * node.mass/(dist**3)
+                acc[idx,0] += (node.center[0] - pos[pos_idx,0]) * acc_mul
+                acc[idx,1] += (node.center[1] - pos[pos_idx,1]) * acc_mul
+                acc[idx,2] += (node.center[2] - pos[pos_idx,2]) * acc_mul
+                phi[idx] += (-1) * G * node.mass/dist
+                return
+    
+        for i in range(8):
+            traverse(node.children[i],particle_array,pos,pos_idx,G,eps,theta,acc,phi,idx,truncations)
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+@cython.cdivision(True)
 cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, double[:,:] eval_pos = None, int steps = 0, double eps = 0, double G = 6.6743e-11, double dt = 1000, double theta = 0):
     cdef Py_ssize_t n_particles = particles.shape[0]
 
@@ -260,6 +274,6 @@ cpdef tuple evaluate(double[:,:] particles, double[:,:] velocities, double[:] ma
     cdef double[:,:] current_part_acc = np.zeros((n_particles,3),dtype=float)
     cdef double[:] current_part_phi = np.zeros((n_particles),dtype=float)
 
-    #phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)
+    cdef int truncs = phi_acc(base_node,particle_array,particles,G,eps,theta,current_part_acc,current_part_phi)
 
-    return np.asarray(current_part_acc),np.asarray(current_part_phi)
+    return np.asarray(current_part_acc),np.asarray(current_part_phi),truncs
