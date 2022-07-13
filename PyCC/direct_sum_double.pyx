@@ -1,6 +1,7 @@
 import cython
 from cython.parallel import prange
 import numpy as np
+cimport numpy as np
 from libc.math cimport sqrt
 import time
 import pandas as pd
