@@ -1,9 +1,10 @@
+from tkinter import E
 import numpy as np
 import struct
 import moderngl
 import time
 from scipy import constants
-from math import ceil
+from math import ceil, comb
 import pandas as pd
 
 ctx = moderngl.create_context(standalone=True)
@@ -16,11 +17,9 @@ prog = ctx.program(
     out vec3 acc;
     out float phi;
 
-    in vec3 part;
-    in float part_mass;
+    in vec4 part;
 
-    in vec3 eval_part;
-    in float eval_part_mass;
+    in vec4 eval_part;
 
     in float eps;
     in float G;
@@ -29,18 +28,15 @@ prog = ctx.program(
     float acc_mul;
 
     void main() {
-        d = distance(part,eval_part);
+        d = sqrt(pow(part[0] - eval_part[0],2) + pow(part[1] - eval_part[1],2) + pow(part[2] - eval_part[2],2) + eps);
         if (d == 0){
+            phi = 0.;
             acc[0] = 0.;
             acc[1] = 0.;
             acc[2] = 0.;
-            phi = 0.;
         } else{
-            if (eps != 0){
-                d = sqrt(pow(d,2) + pow(eps,2));
-            }
-            phi = (-1) * G * part_mass * eval_part_mass / pow(d,2);
-            acc_mul = G * part_mass / pow(d,3);
+            phi = (-1) * G * (part[3] * eval_part[3]) / pow(d,2);
+            acc_mul = G * part[3] / pow(d,3);
             acc[0] = (part[0] - eval_part[0]) * acc_mul;
             acc[1] = (part[1] - eval_part[1]) * acc_mul;
             acc[2] = (part[2] - eval_part[2]) * acc_mul;
@@ -72,42 +68,22 @@ def do_batch(outbuffer,
 
     return acc,phis
 
-def phi_acc(particles,masses,eps=0,G=1):
+def phi_acc(particles,masses,eps,G,n_particles,max_input,n_batches,part_buffer,eps_buffer,G_buffer,
+            outbuffer_big,outbuffer_small,
+            eval_part_buffer_big,eval_part_buffer_small,
+            vao_big,vao_small):
 
-    fbo = ctx.simple_framebuffer((1,1))
-    fbo.use()
-
-    max_output_size = int((ctx.info["GL_MAX_TEXTURE_BUFFER_SIZE"]*2))/4
-    n_particles = particles.shape[0]
-    max_input = int(max_output_size/n_particles)
-
-    particles_bytes = particles.astype("f4").tobytes()
-    masses_bytes = masses.astype("f4").tobytes()
+    combined_part_mass = np.concatenate((particles,masses),axis=1).astype("f4").tobytes()
     
     out_acc = np.zeros_like(particles,dtype=np.float32)
     out_phi = np.zeros_like(masses,dtype=np.float32)
 
-    part_buffer = ctx.buffer(particles_bytes)
-    part_mass_buffer = ctx.buffer(masses_bytes)
-    eps_buffer = ctx.buffer(np.array([[eps]]).astype("f4").tobytes())
-    G_buffer = ctx.buffer(np.array([[G]]).astype("f4").tobytes())
-    
-    n_batches = ceil(n_particles/max_input)
-    
-    if n_batches == 1:
-        max_input = n_particles
-    
-    eval_part_buffer = ctx.buffer(reserve=max_input * 3 * 4)
-    eval_part_mass_buffer = ctx.buffer(reserve=max_input * 4)
+    part_buffer.write(combined_part_mass)
 
-    outbuffer = ctx.buffer(reserve=n_particles*max_input*4*4)
+    outbuffer = outbuffer_big
+    eval_part_buffer = eval_part_buffer_big
 
-    vao = ctx.vertex_array(prog, [(part_buffer, "3f", "part"),
-                                    (part_mass_buffer, "1f", "part_mass"), 
-                                    (eval_part_buffer, "3f /i", "eval_part"), 
-                                    (eval_part_mass_buffer, "3f /i", "eval_part_mass"), 
-                                    (eps_buffer, "1f /r", "eps"), 
-                                    (G_buffer, "1f /r", "G")])
+    vao = vao_big
 
     for i in range(n_batches):
 
@@ -117,42 +93,88 @@ def phi_acc(particles,masses,eps=0,G=1):
 
         if (start + input_size) > n_particles:
             input_size = n_particles - start
-            eval_part_buffer.release()
-            eval_part_mass_buffer.release()
-            outbuffer.release()
 
-            eval_part_buffer = ctx.buffer(reserve=(input_size) * 3 * 4)
-            eval_part_mass_buffer = ctx.buffer(reserve=(input_size) * 4)
-            outbuffer = ctx.buffer(reserve=n_particles*input_size*4*4)
+            eval_part_buffer = eval_part_buffer_small
+            outbuffer = outbuffer_small
 
-            vao = ctx.vertex_array(prog, [(part_buffer, "3f", "part"),
-                                    (part_mass_buffer, "1f", "part_mass"), 
-                                    (eval_part_buffer, "3f /i", "eval_part"), 
-                                    (eval_part_mass_buffer, "3f /i", "eval_part_mass"), 
-                                    (eps_buffer, "1f /r", "eps"), 
-                                    (G_buffer, "1f /r", "G")])
+            vao = vao_small
         
-        start = start*3*4
-        end = start + (input_size)*3*4
-        eval_part_buffer.write(particles_bytes[start:end])
+        start = start
+        end = start + (input_size)
+        eval_part_buffer.write(combined_part_mass[start * 4 * 4:start * 4 * 4 + (input_size) * 4 * 4])
 
-        start = start*4
-        end = start + (input_size)*4
-        eval_part_mass_buffer.write(masses_bytes[start:end])
-        print(np.ndarray(input_size,"f4",eval_part_mass_buffer.read()))
+        vao.transform(outbuffer,instances=input_size)
 
-        accs,phis = do_batch(outbuffer,n_particles,input_size,vao)
-        #print(accs,phis)
+        out = np.ndarray((n_particles*input_size*4),"f4",outbuffer.read())
 
-    
+        x = np.sum(np.reshape(out[1::4],(input_size,n_particles)),axis=1)
+        y = np.sum(np.reshape(out[2::4],(input_size,n_particles)),axis=1)
+        z = np.sum(np.reshape(out[3::4],(input_size,n_particles)),axis=1)
+        phis = np.sum(np.reshape(out[::4],(input_size,n_particles)),axis=1)
+        acc = np.column_stack((x,y,z))
+        
+        out_acc[start:end] = acc
+        out_phi[start:end] = phis.reshape((phis.shape[0],1))
+
+    return out_acc,out_phi
+
+def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
+    fbo = ctx.simple_framebuffer((1,1))
+    fbo.use()
+
+    max_output_size = int((ctx.info["GL_MAX_TEXTURE_BUFFER_SIZE"]*2))/4
+    n_particles = particles.shape[0]
+    max_input = int(max_output_size/n_particles)
+
+    n_batches = ceil(n_particles/max_input)
+
+    if n_batches == 1:
+        max_input = n_particles
+
+    part_buffer = ctx.buffer(reserve=(n_particles * 4 * 4))
+    eps_buffer = ctx.buffer(np.array([[eps**2]]).astype("f4").tobytes())
+    G_buffer = ctx.buffer(np.array([[G]]).astype("f4").tobytes())
+
+    outbuffer_big = ctx.buffer(reserve=n_particles*max_input*4*4)
+    eval_part_buffer_big = ctx.buffer(reserve=max_input * 4 * 4)
+
+    vao_big = ctx.vertex_array(prog, [(part_buffer, "4f", "part"),(eval_part_buffer_big, "4f /i", "eval_part"), (eps_buffer, "1f /r", "eps"), (G_buffer, "1f /r", "G")])
+
+    outbuffer_small = None
+    eval_part_buffer_small = None
+    vao_small = None
+    if n_batches != 1:
+        if n_batches * max_input != n_particles:
+            size = n_particles - ((n_batches - 1) * max_input)
+            outbuffer_small = ctx.buffer(reserve=(n_particles*size*4*4))
+            eval_part_buffer_small = ctx.buffer(reserve=size * 4 * 4)
+            vao_small = ctx.vertex_array(prog, [(part_buffer, "4f", "part"),(eval_part_buffer_small, "4f /i", "eval_part"), (eps_buffer, "1f /r", "eps"), (G_buffer, "1f /r", "G")])
+
+    acc,phi = phi_acc(particles,masses,eps,G,n_particles,max_input,n_batches,
+                        part_buffer,
+                        eps_buffer,
+                        G_buffer,
+                        outbuffer_big,
+                        outbuffer_small,
+                        eval_part_buffer_big,
+                        eval_part_buffer_small,
+                        vao_big,
+                        vao_small)
+
     fbo.release()
-    vao.release()
     part_buffer.release()
-    part_mass_buffer.release()
     eps_buffer.release()
     G_buffer.release()
-    eval_part_buffer.release()
-    eval_part_mass_buffer.release()
+    outbuffer_big.release()
+    eval_part_buffer_big.release()
+    vao_big.release()
+    if outbuffer_small != None:
+        eval_part_buffer_small.release()
+        outbuffer_small.release()
+        vao_small.release()
+
+    return acc,phi
+
 
 def Uniform(r,n,p,file=None):
     phi = np.random.uniform(low=0,high=2*np.pi,size=n)
@@ -173,8 +195,9 @@ def Uniform(r,n,p,file=None):
         df.to_csv(file,index=False)
     return df
 
-df = Uniform(10,10,10)
+df = Uniform(10,20000,1)
 pos = df.loc[:,["x","y","z"]].to_numpy()
 masses = df.loc[:,["mass"]].to_numpy()
+vels = df.loc[:,["vx","vy","vz"]].to_numpy()
 
-phi_acc(pos,masses,G=constants.G)
+acc,phi = evaluate(pos,vels,masses,G=constants.G)
