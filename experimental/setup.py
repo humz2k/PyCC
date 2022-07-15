@@ -3,6 +3,8 @@ from Cython.Build import cythonize
 import numpy as np
 
 setup(
-    ext_modules = cythonize("treecode.pyx"),
-    compiler_directives={'language_level' : "3"}
+    ext_modules = cythonize(["test_speed.pyx"]),
+    compiler_directives={'language_level' : "3"},
+    include_dirs=[np.get_include()]
 )
+

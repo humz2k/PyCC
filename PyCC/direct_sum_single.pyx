@@ -12,12 +12,12 @@ np.import_array()
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void phi_acc(double[:,:] particles, double[:] masses, double G, double eps, double[:,:] acc, double[:] phi):
+cdef void phi_acc(float[:,:] particles, float[:] masses, float G, float eps, float[:,:] acc, float[:] phi):
     cdef Py_ssize_t n_particles = particles.shape[0]
     cdef int pos_idx
     cdef int part_idx
-    cdef double acc_mul
-    cdef double dist
+    cdef float acc_mul
+    cdef float dist
     for pos_idx in prange(n_particles,nogil=True):
 
         acc[pos_idx,0] = 0
@@ -38,7 +38,7 @@ cdef void phi_acc(double[:,:] particles, double[:] masses, double G, double eps,
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void copy2d(double[:,:] source, double[:,:] dest):
+cdef void copy2d(float[:,:] source, float[:,:] dest):
     cdef Py_ssize_t x_source = source.shape[0]
     cdef Py_ssize_t y_source = source.shape[1]
     cdef int x
@@ -51,7 +51,7 @@ cdef void copy2d(double[:,:] source, double[:,:] dest):
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void copy2out2d(double[:,:] source, int index, int offset, double[:,:,:] dest):
+cdef void copy2out2d(float[:,:] source, int index, int offset, float[:,:,:] dest):
     cdef Py_ssize_t x_source = source.shape[0]
     cdef Py_ssize_t y_source = source.shape[1]
     cdef int x
@@ -64,7 +64,7 @@ cdef void copy2out2d(double[:,:] source, int index, int offset, double[:,:,:] de
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void copy2out1d(double[:] source, int index, int offset, double[:,:,:] dest):
+cdef void copy2out1d(float[:] source, int index, int offset, float[:,:,:] dest):
     cdef Py_ssize_t x_source = source.shape[0]
     cdef int x
     cdef int y
@@ -75,7 +75,7 @@ cdef void copy2out1d(double[:] source, int index, int offset, double[:,:,:] dest
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef void add2d(double[:,:] source, double[:,:] dest, double mul = 1):
+cdef void add2d(float[:,:] source, float[:,:] dest, float mul = 1):
     cdef Py_ssize_t x_source = source.shape[0]
     cdef Py_ssize_t y_source = source.shape[1]
     cdef int x
@@ -88,15 +88,15 @@ cdef void add2d(double[:,:] source, double[:,:] dest, double mul = 1):
 @cython.wraparound(False)
 @cython.cdivision(True)
 @cython.nonecheck(False)
-cdef double[:,:,:] c_evaluate(double[:,:] particles, double[:,:] velocities, double[:] masses, int steps = 0, double eps = 0, double G = 1, double dt = 1):
+cdef float[:,:,:] c_evaluate(float[:,:] particles, float[:,:] velocities, float[:] masses, int steps = 0, float eps = 0, float G = 1, float dt = 1):
     cdef Py_ssize_t n_particles = particles.shape[0]
     
-    cdef double[:,:,:] part_out = np.zeros((steps + 1,n_particles,12),dtype=np.float64)
+    cdef float[:,:,:] part_out = np.zeros((steps + 1,n_particles,12),dtype=np.float32)
 
-    cdef double[:,:] current_part_pos = np.zeros((n_particles,3),dtype=np.float64)
-    cdef double[:,:] current_part_vel = np.zeros((n_particles,3),dtype=np.float64)
-    cdef double[:,:] current_part_acc = np.zeros((n_particles,3),dtype=np.float64)
-    cdef double[:] current_part_phi = np.zeros((n_particles),dtype=np.float64)
+    cdef float[:,:] current_part_pos = np.zeros((n_particles,3),dtype=np.float32)
+    cdef float[:,:] current_part_vel = np.zeros((n_particles,3),dtype=np.float32)
+    cdef float[:,:] current_part_acc = np.zeros((n_particles,3),dtype=np.float32)
+    cdef float[:] current_part_phi = np.zeros((n_particles),dtype=np.float32)
 
     copy2d(particles,current_part_pos)
     copy2d(velocities,current_part_vel)
@@ -139,7 +139,7 @@ cdef double[:,:,:] c_evaluate(double[:,:] particles, double[:,:] velocities, dou
 def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     first = time.perf_counter()
 
-    part_out = c_evaluate(particles, velocities, masses, steps=steps, eps=eps, G=G, dt = dt)
+    part_out = c_evaluate(particles.astype("f4"), velocities.astype("f4"), masses.astype("f4"), steps=steps, eps=eps, G=G, dt = dt)
 
     second = time.perf_counter()
 

@@ -1,28 +1,19 @@
 import PyCC
 import numpy as np
-import matplotlib.pyplot as plt
 
-r = 10000
-p = 0.1
-ray_steps = 25
 
-x = list(PyCC.ray_rs(r*2,ray_steps))
-xs = []
-ys = []
+df = PyCC.Distributions.Plummer(1000,1,1,1)
 
-rays = []
-for vector in PyCC.random_vectors(50):
-    rays.append(PyCC.ray(vector,r*2,ray_steps))
+out,stats = PyCC.evaluate(df,steps=0,eps=0,G=1)
+print(stats)
 
-for i in range(2):
-    df = PyCC.Distributions.Uniform(r=r,n=1000,p=p)
-    ray_analytics = PyCC.Analytic.Uniform(r=r,p=p,positions=rays[0])
+print(np.sum(out.loc[:,"phi"].to_numpy())/2)
 
-    for ray in rays:
-        out,ray_out,stats = PyCC.evaluate(df,evaluate_at=ray,steps=0,precision="double")
-        ray_phis = ray_out.loc[:,"phi"].to_numpy()
-        xs += x
-        ys += list(ray_phis - ray_analytics)
+def e_kin(outs,df):
+    steps = np.unique(outs.loc[:,"step"].to_numpy())
+    energies = np.zeros((len(steps)),dtype=float)
+    for step in steps:
+        energies[step] = np.sum(0.5 * df.loc[:,"mass"].to_numpy() * np.linalg.norm(out[out["step"] == step].loc[:,["vx","vy","vz"]].to_numpy(),axis=1)**2)
+    return energies
 
-plt.hist2d(xs,ys,bins=50)
-plt.show()
+print(e_kin(out,df))

@@ -26,6 +26,46 @@ class Distributions(object):
         return df
 
     @staticmethod
+    def Plummer(n,a=1,M=1,G=1,file=None):
+        phi = np.random.uniform(low=0,high=2*np.pi,size=n)
+        theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
+        particle_r = a / np.sqrt(((np.random.uniform(low=0,high=1,size=n)**(-2./3.))) - 1)
+        x_pos = particle_r * np.sin(theta) * np.cos(phi)
+        y_pos = particle_r * np.sin(theta) * np.sin(phi)
+        z_pos = particle_r * np.cos(theta)
+        particle_mass = (M)/n
+        particles = np.column_stack([x_pos,y_pos,z_pos])
+
+        x = np.zeros((n),dtype=float)
+        y = np.zeros((n),dtype=float)
+        
+        idx = 0
+        while idx < n:
+            temp_x = np.random.uniform(low=0,high=1,size=1)[0]
+            temp_y = np.random.uniform(low=0,high=0.1,size=1)[0]
+            if temp_y <= temp_x*temp_x*((1.0 - temp_x**2)**3.5):
+                x[idx] = temp_x
+                y[idx] = temp_y
+                idx += 1
+
+        vel = x * np.sqrt(2.0) * np.sqrt((G * M)/(np.sqrt(a**2 + particle_r**2)))
+        phi = np.random.uniform(low=0,high=2*np.pi,size=n)
+        theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
+
+        x_vel = vel * np.sin(theta) * np.cos(phi)
+        y_vel = vel * np.sin(theta) * np.sin(phi)
+        z_vel = vel * np.cos(theta)
+
+        velocities = np.column_stack([x_vel,y_vel,z_vel])
+        masses = pd.DataFrame(np.full((1,n),particle_mass).T,columns=["mass"])
+        particles = pd.DataFrame(particles,columns=["x","y","z"])
+        velocities = pd.DataFrame(velocities,columns=["vx","vy","vz"])
+        df = pd.concat((particles,velocities,masses),axis=1)
+        if file != None:
+            df.to_csv(file,index=False)
+        return df
+
+    @staticmethod
     def NFW(Rvir,c,p0,n,file=None):
         Rs = Rvir/c
         def mass(r,Rs=Rs,p0=p0):
@@ -59,17 +99,17 @@ class Distributions(object):
 
 class Analytic(object):
     @staticmethod
-    def Uniform(r,p,positions):
+    def Uniform(r,p,positions,G):
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(r,p,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
             relative = pos_r/r
             if relative == 1:
-                return (-4/3) * np.pi * constants.G * p * (r ** 2)
+                return (-4/3) * np.pi * G * p * (r ** 2)
             elif relative < 1:
-                return (-2) * np.pi * constants.G * p * ((r ** 2) - ((1/3) * ((pos_r)**2)))
+                return (-2) * np.pi * G * p * ((r ** 2) - ((1/3) * ((pos_r)**2)))
             else:
-                return (-4/3) * np.pi * constants.G * p * ((r ** 3)/(pos_r))
+                return (-4/3) * np.pi * G * p * ((r ** 3)/(pos_r))
         out = np.zeros((len(positions)),dtype=float)
         for idx,pos in enumerate(positions):
             out[idx] = phi(r,p,pos)
