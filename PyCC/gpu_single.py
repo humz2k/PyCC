@@ -3,7 +3,7 @@ import struct
 import moderngl
 import time
 from scipy import constants
-from math import ceil, comb
+from math import ceil
 import pandas as pd
 
 ctx = moderngl.create_context(standalone=True)
@@ -53,6 +53,8 @@ def phi_acc(particles,masses,eps,G,n_particles,max_input,n_batches,part_buffer,e
             eval_part_buffer_big,eval_part_buffer_small,
             vao_big,vao_small):
 
+    gpu_time = 0
+
     combined_part_mass = np.concatenate((particles,masses),axis=1).astype("f4").tobytes()
     
     out = np.zeros((n_particles,4),dtype=np.float32)
@@ -82,11 +84,27 @@ def phi_acc(particles,masses,eps,G,n_particles,max_input,n_batches,part_buffer,e
         end = start + (input_size)
         eval_part_buffer.write(combined_part_mass[start * 4 * 4:start * 4 * 4 + (input_size) * 4 * 4])
 
+        first = time.perf_counter()
+
         vao.transform(outbuffer,instances=input_size)
+        temp = outbuffer.read()
 
-        out[start:end] = np.sum(np.ndarray((input_size,n_particles,4),"f4",outbuffer.read()),axis=1)
+        second = time.perf_counter()
 
-    return out
+        gpu_time += second-first
+
+        temp = np.ndarray((n_particles*input_size*4),"f4",outbuffer.read())
+
+        sum_time_start = time.perf_counter()
+        x = np.sum(np.reshape(temp[1::4],(input_size,n_particles)),axis=1)
+        y = np.sum(np.reshape(temp[2::4],(input_size,n_particles)),axis=1)
+        z = np.sum(np.reshape(temp[3::4],(input_size,n_particles)),axis=1)
+        phis = np.sum(np.reshape(temp[::4],(input_size,n_particles)),axis=1)
+        out[start:end] = np.column_stack((x,y,z,phis))
+
+        sum_end = time.perf_counter()
+
+    return out,gpu_time,sum_end - sum_time_start
 
 def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
 
@@ -128,6 +146,8 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     save_vel = np.zeros((steps+1,n_particles,3),dtype=np.float32)
     save_pos = np.zeros_like(save_vel)
 
+    masses = masses.reshape(masses.shape + (1,))
+
     current_pos = np.copy(particles)
     current_vel = np.copy(velocities)
 
@@ -135,8 +155,12 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
 
     save_pos[0] = current_pos
     save_vel[0] = current_vel
+    gpu_time = 0
+    phi_acc_time = 0
+    total_sum_time = 0
 
-    out = phi_acc(current_pos,masses,eps,G,n_particles,max_input,n_batches,
+    phi_acc_time_first = time.perf_counter()
+    out,temp_time,sum_time = phi_acc(current_pos,masses,eps,G,n_particles,max_input,n_batches,
                 part_buffer,
                 eps_buffer,
                 G_buffer,
@@ -146,6 +170,11 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
                 eval_part_buffer_small,
                 vao_big,
                 vao_small)
+    phi_acc_time_second = time.perf_counter()
+    phi_acc_time += phi_acc_time_second-phi_acc_time_first
+    total_sum_time += sum_time
+    
+    gpu_time += temp_time
     
     save_phi_acc[0] = out
     current_acc = out[:,[0,1,2]]
@@ -158,7 +187,8 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
         save_pos[step+1] = current_pos
         save_vel[step+1] = current_vel
 
-        out = phi_acc(current_pos,masses,eps,G,n_particles,max_input,n_batches,
+        phi_acc_time_first = time.perf_counter()
+        out,temp_time,sum_time = phi_acc(current_pos,masses,eps,G,n_particles,max_input,n_batches,
                 part_buffer,
                 eps_buffer,
                 G_buffer,
@@ -168,6 +198,11 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
                 eval_part_buffer_small,
                 vao_big,
                 vao_small)
+        phi_acc_time_second = time.perf_counter()
+        phi_acc_time += phi_acc_time_second-phi_acc_time_first
+        
+        gpu_time += temp_time
+        total_sum_time += sum_time
         
         save_phi_acc[step+1] = out
         current_acc = out[:,[0,1,2]]
@@ -204,6 +239,9 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     stats["release_time"] = start_save - end_eval
     stats["setup_time"] = start_eval - start
     stats["nbatches"] = n_batches * (steps+1)
+    stats["gpu_time"] = gpu_time
+    stats["phi_acc_time"] = phi_acc_time
+    stats["sum_time"] = total_sum_time
 
     return save_out,stats
 
