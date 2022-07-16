@@ -10,22 +10,22 @@ def get_prog(n):
     return """
     #version 410
 
-    in vec4 pos;
+    in mediump vec4 pos;
 
-    in float eps;
-    in float G;
+    in mediump float eps;
+    in mediump float G;
 
-    out float phi;
-    out vec3 acc;
+    out mediump float phi;
+    out mediump vec3 acc;
 
     uniform myBlock{
-        vec4 parts[""" + str(n) + """];
+        mediump vec4 parts[""" + str(n) + """];
     };
 
     uniform int n;
 
-    float d;
-    float acc_mul;
+    mediump float d;
+    mediump float acc_mul;
 
     void main() {
         phi = 0.;

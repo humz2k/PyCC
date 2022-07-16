@@ -79,7 +79,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     out_buffer = ctx.buffer(reserve=n_particles*4*4)
 
     particles_f4 = particles.astype("f2")
-    masses_f4 = masses.astype("f2").reshape(masses.shape[0],1)
+    masses_f4 = masses.astype("f2").reshape(masses.shape[0],1)  
 
     vao = ctx.vertex_array(prog, [(pos_buffer, "4f2", "pos"),(eps_buffer, "1f2 /r", "eps"), (G_buffer, "1f2 /r", "G")])
 
@@ -87,8 +87,8 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     save_vel = np.zeros((steps+1,n_particles,3),dtype=np.float32)
     save_pos = np.zeros_like(save_vel,dtype=np.float32)
 
-    current_pos = np.copy(particles)
-    current_vel = np.copy(velocities)
+    current_pos = np.copy(particles_f4)
+    current_vel = np.copy(velocities.astype("f4"))
 
     save_vel[0] = current_vel
     save_pos[0] = current_pos
@@ -131,8 +131,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     return pd.concat((step_labels,ids,save_pos,save_vel,save_phi_acc),axis=1),{"eval_time":second-first}
 
 def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles,n_batches):
-    combined = np.concatenate((particles,masses),axis=1).astype("f2").tobytes()
-    combined2 = np.concatenate((particles,masses),axis=1).astype("f2").astype("f4").tobytes()    
+    combined = np.concatenate((particles,masses),axis=1).astype("f2").astype("f4").tobytes()
 
     out = np.zeros((n_particles,4),dtype=np.float32)
 
@@ -141,19 +140,19 @@ def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles
         current_n = n_particles
 
     prog.__getitem__("n").write(np.array([[4096]]).astype(np.int32).tobytes())
-    pos_buffer.write(combined)
+    pos_buffer.write(np.concatenate((particles,masses),axis=1).astype("f2").tobytes())
 
     start = 0
     end = n_particles
     for batch in range(n_batches - 1):
-        start = batch * 4 * 2
-        end = batch * 4 * 2 + (4096) * 4 * 2
-        allParts.write(combined2[start:end])
+        start = batch * 4 * 4
+        end = batch * 4 * 4 + (4096) * 4 * 4 
+        allParts.write(combined[start:end])
         vao.transform(out_buffer)
         out += np.ndarray((n_particles,4),"f4",out_buffer.read())
 
     prog.__getitem__("n").write(np.array([[n_particles - (n_batches-1) * 4096]]).astype(np.int32).tobytes())
-    allParts.write(combined2[(n_batches-1) * 4096 * 4 * 2:n_particles * 4 * 2])
+    allParts.write(combined[(n_batches-1) * 4096 * 4 * 4:n_particles * 4 * 4])
 
     vao.transform(out_buffer)
 
