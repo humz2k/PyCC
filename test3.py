@@ -4,7 +4,7 @@ from scipy import constants
 import matplotlib.pyplot as plt
 import time
 
-df = PyCC.Distributions.Uniform(100,1000000,1)
+df = PyCC.Distributions.Uniform(1,3,1)
 
 ray = PyCC.ray(np.array([1,0,0]),2,25)
 
@@ -12,9 +12,16 @@ ray = PyCC.ray(np.array([1,0,0]),2,25)
 
 #print(stats["eval_time"])
 
-out,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="f4",accelerate=True)
+out,stats = PyCC.evaluate(df,steps=0,G=1,precision="f2",accelerate=True)
 
-print(stats["eval_time"])
+print(out)
+
+out2,stats = PyCC.evaluate(df,steps=0,G=1,precision="f4",accelerate=True)
+
+print(out2)
+
+print(out.loc[:,"phi"].to_numpy() - out2.loc[:,"phi"].to_numpy())
+
 
 '''
 

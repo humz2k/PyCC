@@ -10,22 +10,22 @@ def get_prog(n):
     return """
     #version 410
 
-    in vec4 pos;
+    in lowp vec4 pos;
 
-    in float eps;
-    in float G;
+    in lowp float eps;
+    in lowp float G;
 
-    out float phi;
-    out vec3 acc;
+    out lowp float phi;
+    out lowp vec3 acc;
 
     uniform myBlock{
-        vec4 parts[""" + str(n) + """];
+        lowp vec4 parts[""" + str(n) + """];
     };
 
     uniform int n;
 
-    float d;
-    float acc_mul;
+    lowp float d;
+    lowp float acc_mul;
 
     void main() {
         phi = 0.;
@@ -34,8 +34,11 @@ def get_prog(n):
         acc[2] = 0.;
 
         for (int i = 0; i < n; ++i){
-            d = sqrt(pow(parts[i][0] - pos[0],2) + pow(parts[i][1] - pos[1],2) + pow(parts[i][2] - pos[2],2) + eps);
+            d = sqrt(pow(parts[i][0] - pos[0],2) + pow(parts[i][1] - pos[1],2) + pow(parts[i][2] - pos[2],2));
             if (d != 0){
+                if (eps != 0){
+                    d = sqrt(pow(d,2) + eps);
+                }
                 phi = phi + (-1) * G * (pos[3] * parts[i][3]) / pow(d,2);
                 acc_mul = G * parts[i][3] / pow(d,3);
                 acc[0] = acc[0] + (parts[i][0] - pos[0]) * acc_mul;
@@ -68,17 +71,17 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
         varyings=["acc","phi"],
     )
 
-    pos_buffer = ctx.buffer(reserve=n_particles*4*4)
+    pos_buffer = ctx.buffer(reserve=n_particles*4*2)
     allParts = ctx.buffer(reserve=n_particles*4*4)
     allParts.bind_to_uniform_block(0)
-    eps_buffer = ctx.buffer(np.array([[eps**2]]).astype("f4").tobytes())
-    G_buffer = ctx.buffer(np.array([[G]]).astype("f4").tobytes())
+    eps_buffer = ctx.buffer(np.array([[eps**2]]).astype("f2").tobytes())
+    G_buffer = ctx.buffer(np.array([[G]]).astype("f2").tobytes())
     out_buffer = ctx.buffer(reserve=n_particles*4*4)
 
-    particles_f4 = particles.astype("f4")
-    masses_f4 = masses.astype("f4").reshape(masses.shape[0],1)
+    particles_f4 = particles.astype("f2")
+    masses_f4 = masses.astype("f2").reshape(masses.shape[0],1)
 
-    vao = ctx.vertex_array(prog, [(pos_buffer, "4f", "pos"),(eps_buffer, "1f /r", "eps"), (G_buffer, "1f /r", "G")])
+    vao = ctx.vertex_array(prog, [(pos_buffer, "4f2", "pos"),(eps_buffer, "1f2 /r", "eps"), (G_buffer, "1f2 /r", "G")])
 
     save_phi_acc = np.zeros((steps+1,n_particles,4),dtype=np.float32)
     save_vel = np.zeros((steps+1,n_particles,3),dtype=np.float32)
@@ -128,7 +131,8 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     return pd.concat((step_labels,ids,save_pos,save_vel,save_phi_acc),axis=1),{"eval_time":second-first}
 
 def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles,n_batches):
-    combined = np.concatenate((particles,masses),axis=1).tobytes()
+    combined = np.concatenate((particles,masses),axis=1).astype("f2").tobytes()
+    combined2 = np.concatenate((particles,masses),axis=1).astype("f2").astype("f4").tobytes()    
 
     out = np.zeros((n_particles,4),dtype=np.float32)
 
@@ -142,14 +146,14 @@ def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles
     start = 0
     end = n_particles
     for batch in range(n_batches - 1):
-        start = batch * 4 * 4
-        end = batch * 4 * 4 + (4096) * 4 * 4 
-        allParts.write(combined[start:end])
+        start = batch * 4 * 2
+        end = batch * 4 * 2 + (4096) * 4 * 2
+        allParts.write(combined2[start:end])
         vao.transform(out_buffer)
         out += np.ndarray((n_particles,4),"f4",out_buffer.read())
 
     prog.__getitem__("n").write(np.array([[n_particles - (n_batches-1) * 4096]]).astype(np.int32).tobytes())
-    allParts.write(combined[(n_batches-1) * 4096 * 4 * 4:n_particles * 4 * 4])
+    allParts.write(combined2[(n_batches-1) * 4096 * 4 * 2:n_particles * 4 * 2])
 
     vao.transform(out_buffer)
 
