@@ -4,7 +4,7 @@ from scipy import constants
 import matplotlib.pyplot as plt
 import time
 
-df = PyCC.Distributions.Uniform(1,1024,1)
+df = PyCC.Distributions.Uniform(100,1000000,1)
 
 ray = PyCC.ray(np.array([1,0,0]),2,25)
 
@@ -12,18 +12,11 @@ ray = PyCC.ray(np.array([1,0,0]),2,25)
 
 #print(stats["eval_time"])
 
-out,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="f4",accelerate=False)
+out,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="f4",accelerate=True)
 
 print(stats["eval_time"])
+
 '''
-
-nogpu = out.loc[:,["ax","ay","az","phi"]].to_numpy().astype("f4")
-yesgpu = out2.loc[:,["ax","ay","az","phi"]].to_numpy().astype("f4")
-
-for i in range(len(nogpu)):
-    print(nogpu[i])
-    print(yesgpu[i])
-    print("")
 
 nogpu = out.loc[:,["x","y","z"]].to_numpy().astype("f4")
 yesgpu = out2.loc[:,["x","y","z"]].to_numpy().astype("f4")

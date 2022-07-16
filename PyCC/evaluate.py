@@ -6,7 +6,7 @@ sys.path.append(fpath)
 
 import direct_sum_double
 import direct_sum_single
-import gpu_single
+import gpu_test as gpu_single
 
 def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False):
     particles = particle_df.loc[:,["x","y","z"]].to_numpy()
