@@ -10,22 +10,22 @@ def get_prog(n):
     return """
     #version 410
 
-    in mediump vec4 pos;
+    in vec4 pos;
 
-    in mediump float eps;
-    in mediump float G;
+    in float eps;
+    in float G;
 
-    out mediump float phi;
-    out mediump vec3 acc;
+    out float phi;
+    out vec3 acc;
 
     uniform myBlock{
-        mediump vec4 parts[""" + str(n) + """];
+        vec4 parts[""" + str(n) + """];
     };
 
     uniform int n;
 
-    mediump float d;
-    mediump float acc_mul;
+    float d;
+    float acc_mul;
 
     void main() {
         phi = 0.;
@@ -106,7 +106,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
         save_vel[step+1] = current_vel
         save_pos[step+1] = current_pos
 
-        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles_f4,masses_f4,n_particles,n_batches)
+        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos.astype("f4"),masses_f4,n_particles,n_batches)
 
         save_phi_acc[step+1] = out
         current_acc = out[:,[0,1,2]]
