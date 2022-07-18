@@ -1,43 +1,39 @@
 import PyCC
 import numpy as np
 import matplotlib.pyplot as plt
+import PyCC.gpu_analysis as gpu_analysis
 
-plummer = PyCC.Distributions.Plummer(100,1,1,1)
-#plummer = PyCC.Distributions.Uniform(1,100,1)
+#plummer = PyCC.Distributions.Plummer(1000,1,1,1)
+n = 1000
+G = 1
+rs = 1
+c = 1
+ps = 10
+Rvir = rs * c
 
-nsteps = 100
+df = PyCC.Distributions.NFW(rs,ps,c,n)
 
-outf8,stats = PyCC.evaluate(plummer,steps=nsteps,dt=1/64,precision="f4",accelerate=False)
-outf4,stats = PyCC.evaluate(plummer,steps=nsteps,dt=1/64,precision="f4",accelerate=True)
+ray = PyCC.ray(np.array([1,0,0]),Rvir,25)
 
-ke = []
-phis = []
-kef4 = []
-phisf4 = []
-for step in range(nsteps+1):
-    vels = outf8[outf8["step"] == step].loc[:,["vx","vy","vz"]].to_numpy()
-    speeds = np.linalg.norm(vels,axis=1)
-    energies = (1/2) * plummer.loc[:,"mass"].to_numpy()[0] * (speeds**2)
-    energy = np.sum(energies)
-    ke.append(energy)
-    phis.append(np.sum(outf8[outf8["step"] == step].loc[:,"phi"].to_numpy())/2)
+nsteps = 0
 
-    vels = outf4[outf4["step"] == step].loc[:,["vx","vy","vz"]].to_numpy()
-    speeds = np.linalg.norm(vels,axis=1)
-    energies = (1/2) * plummer.loc[:,"mass"].to_numpy()[0] * (speeds**2)
-    energy = np.sum(energies)
-    kef4.append(energy)
-    phisf4.append(np.sum(outf4[outf4["step"] == step].loc[:,"phi"].to_numpy())/2)
+outf4gpu,stats = PyCC.evaluate(df,steps=nsteps,dt=1,G=G,precision="f8",accelerate=False)
 
-ke = np.array(ke)
-phis = np.array(phis)
-tot = ke+phis
+phi = outf4gpu.loc[:,["phi"]].to_numpy().flatten()
 
-kef4 = np.array(kef4)
-phisf4 = np.array(phisf4)
-totf4 = kef4+phisf4
+particles = outf4gpu.loc[:,["x","y","z"]].to_numpy().reshape(nsteps+1,n,3)
+masses = df.loc[:,"mass"].to_numpy()
+pos = ray.loc[:,["x","y","z"]].to_numpy()
 
-plt.plot(tot,label="f8",alpha=0.5)
-plt.plot(totf4,label="f4",alpha=0.5)
-plt.legend()
+out,stats = gpu_analysis.evaluate(particles,masses,[0],pos)
+
+analytics = PyCC.Analytic.NFW(rs,ps,ray,G)
+summed = out.loc[:,"phi"].to_numpy()
+
+#plt.plot(PyCC.points2radius(ray)/Rvir,analytics)
+plt.scatter(PyCC.points2radius(ray)/Rvir,summed-analytics)
+#plt.scatter(PyCC.points2radius(df)/Rvir,phi/masses[0])
+plt.xlabel(r"$\frac{r}{R_{vir}}$")
+plt.ylabel(r"$\phi$")
 plt.show()
+

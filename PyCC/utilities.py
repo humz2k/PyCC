@@ -1,12 +1,11 @@
 import numpy as np
 import pandas as pd
 from scipy import spatial
-from scipy import constants
-from scipy.special import lambertw
+from scipy import special
 
 class Distributions(object):
     @staticmethod
-    def Uniform(r,n,p,file=None):
+    def Uniform(n,r,p,file=None):
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
         particle_r = r * ((np.random.uniform(low=0,high=1,size=n))**(1/3))
@@ -66,21 +65,27 @@ class Distributions(object):
         return df
 
     @staticmethod
-    def NFW(Rvir,c,p0,n,file=None):
-        Rs = Rvir/c
-        def mass(r,Rs=Rs,p0=p0):
-            return 4 * np.pi * p0 * (Rs**3) * (np.log((Rs+r)/Rs) + (Rs/(Rs + r)) - 1)
-        def cdf(r):
-            return (np.log((Rs+r)/Rs) + (Rs/(Rs + r)) - 1)/(np.log((Rs+Rvir)/Rs) + (Rs/(Rs + Rvir)) - 1)
-        maxMass = mass(Rvir,Rs,p0)
-        def inverse_cdf(p):
-            y = p*(np.log((Rs+Rvir)/Rs) + (Rs/(Rs + Rvir)) - 1)
-            W = lambertw((-1)/(np.exp(y+1)))
-            return float((-Rs/(W)) - Rs)
-        radiuses = np.zeros((n))
-        input_p = np.random.uniform(0,1,n)
-        for i in range(n):
-            radiuses[i] = inverse_cdf(input_p[i])
+    def NFW(Rs,p0,c,n,file=None):
+        def mu(x):
+            return np.log(1.0 + x) - x / (1.0 + x)
+
+        def qnfw(p, c, logp=False):
+            if (logp):
+                p = np.exp(p)
+            p[p>1] = 1
+            p[p<=0] = 0
+            p *= mu(c)
+            return (-(1.0/np.real(special.lambertw(-np.exp(-p-1))))-1)/c
+
+        def rnfw(n, c):
+            return qnfw(np.random.rand(int(n)), c=c)
+
+        Rvir = c*Rs
+
+        #maxMass = 4*np.pi*p0*(Rs**3)*mu(c)
+        maxMass = 4*np.pi*p0*(Rs**3)*(np.log(1+Rvir/Rs) - (Rvir/Rs)/(1+(Rvir/Rs)))
+        radiuses = rnfw(n,c) * Rvir
+
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
         x = radiuses * np.sin(theta) * np.cos(phi)
@@ -96,6 +101,7 @@ class Distributions(object):
         if file != None:
             df.to_csv(file,index=False)
         return df
+        
 
 class Analytic(object):
     @staticmethod
@@ -116,15 +122,16 @@ class Analytic(object):
         return out
 
     @staticmethod
-    def NFW(Rvir,c,p0,positions):
+    def NFW(Rs,p0,positions,G):
         positions = positions.loc[:,["x","y","z"]].to_numpy()
-        Rs = Rvir/c
-        def phi(Rs,p0,pos):
+        def phi(Rs,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
-            return ((-4 * np.pi * constants.G * p0 * (Rs**3))/pos_r) * np.log(1+(pos_r/Rs))
+            if pos_r == 0:
+                return -4 * np.pi * G * p0 * (Rs**2)
+            return (-4 * np.pi * G * p0 * (Rs**2)) * np.log(1+(pos_r/Rs))/(pos_r/Rs)
         out = np.zeros((len(positions)),dtype=float)
         for idx,pos in enumerate(positions):
-            out[idx] = phi(Rs,p0,pos)
+            out[idx] = phi(Rs,pos)
         return out
 
 def angles2vectors(alphas,betas):

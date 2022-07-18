@@ -4,14 +4,24 @@ from scipy import constants
 import matplotlib.pyplot as plt
 import time
 
-df = PyCC.Distributions.Uniform(1,5,1)
+df = PyCC.Distributions.Uniform(1,10,1)
 
 ray = PyCC.ray(np.array([1,0,0]),2,25)
 
-out2,stats = PyCC.evaluate(df,steps=3,G=1,precision="f4",accelerate=True)
-out,stats = PyCC.evaluate(df,steps=3,G=1,precision="f4")
+out2,stats = PyCC.evaluate(df,steps=0,G=1,precision="f4",accelerate=True)
+out,stats = PyCC.evaluate(df,steps=0,G=1,precision="f4")
 
-acc2 = (out2[out2["step"]==0].loc[:,["ax","ay","az"]].to_numpy())
-acc = (out[out["step"]==0].loc[:,["ax","ay","az"]].to_numpy())
+print(out2)
+print(out)
 
+acc2 = (out2.loc[:,["ax","ay","az"]].to_numpy())
+acc = (out.loc[:,["ax","ay","az"]].to_numpy())
+print(acc2-acc)
+
+acc2 = (out2.loc[:,["x","y","z"]].to_numpy())
+acc = (out.loc[:,["x","y","z"]].to_numpy())
+print(acc2-acc)
+
+acc2 = (out2.loc[:,["phi"]].to_numpy())
+acc = (out.loc[:,["phi"]].to_numpy())
 print(acc2-acc)

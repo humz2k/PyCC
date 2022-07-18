@@ -8,12 +8,12 @@ df = PyCC.Distributions.Uniform(1,100,1)
 
 ray = PyCC.ray(np.array([1,0,0]),2,25)
 
-out,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="double")
+out,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="f8")
 print(stats)
 pos_double = out.loc[:,["x","y","z"]].to_numpy()
 phi_double = out.loc[:,"phi"].to_numpy()
 
-out2,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="single")
+out2,stats = PyCC.evaluate(df,steps=0,G=constants.G,precision="f4")
 print(stats)
 pos_single = out2.loc[:,["x","y","z"]].to_numpy()
 phi_single = out2.loc[:,"phi"].to_numpy()

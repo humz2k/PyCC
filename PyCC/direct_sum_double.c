@@ -2904,7 +2904,7 @@ static void __pyx_f_4PyCC_17direct_sum_double_phi_acc(__Pyx_memviewslice __pyx_v
  *                 acc[pos_idx,0] += (particles[part_idx,0] - particles[pos_idx,0]) * acc_mul
  *                 acc[pos_idx,1] += (particles[part_idx,1] - particles[pos_idx,1]) * acc_mul             # <<<<<<<<<<<<<<
  *                 acc[pos_idx,2] += (particles[part_idx,2] - particles[pos_idx,2]) * acc_mul
- *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist**2)
+ *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist)
  */
                                 __pyx_t_15 = __pyx_v_part_idx;
                                 __pyx_t_16 = 1;
@@ -2918,7 +2918,7 @@ static void __pyx_f_4PyCC_17direct_sum_double_phi_acc(__Pyx_memviewslice __pyx_v
  *                 acc[pos_idx,0] += (particles[part_idx,0] - particles[pos_idx,0]) * acc_mul
  *                 acc[pos_idx,1] += (particles[part_idx,1] - particles[pos_idx,1]) * acc_mul
  *                 acc[pos_idx,2] += (particles[part_idx,2] - particles[pos_idx,2]) * acc_mul             # <<<<<<<<<<<<<<
- *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist**2)
+ *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist)
  * 
  */
                                 __pyx_t_18 = __pyx_v_part_idx;
@@ -2932,14 +2932,14 @@ static void __pyx_f_4PyCC_17direct_sum_double_phi_acc(__Pyx_memviewslice __pyx_v
                                 /* "PyCC/direct_sum_double.pyx":35
  *                 acc[pos_idx,1] += (particles[part_idx,1] - particles[pos_idx,1]) * acc_mul
  *                 acc[pos_idx,2] += (particles[part_idx,2] - particles[pos_idx,2]) * acc_mul
- *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist**2)             # <<<<<<<<<<<<<<
+ *                 phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist)             # <<<<<<<<<<<<<<
  * 
  * @cython.boundscheck(False)
  */
                                 __pyx_t_15 = __pyx_v_part_idx;
                                 __pyx_t_16 = __pyx_v_pos_idx;
                                 __pyx_t_17 = __pyx_v_pos_idx;
-                                *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_17 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * ((*((double *) ( /* dim=0 */ (__pyx_v_masses.data + __pyx_t_15 * __pyx_v_masses.strides[0]) ))) * (*((double *) ( /* dim=0 */ (__pyx_v_masses.data + __pyx_t_16 * __pyx_v_masses.strides[0]) ))))) / pow(__pyx_v_dist, 2.0));
+                                *((double *) ( /* dim=0 */ (__pyx_v_phi.data + __pyx_t_17 * __pyx_v_phi.strides[0]) )) += (((-1.0 * __pyx_v_G) * ((*((double *) ( /* dim=0 */ (__pyx_v_masses.data + __pyx_t_15 * __pyx_v_masses.strides[0]) ))) * (*((double *) ( /* dim=0 */ (__pyx_v_masses.data + __pyx_t_16 * __pyx_v_masses.strides[0]) ))))) / __pyx_v_dist);
 
                                 /* "PyCC/direct_sum_double.pyx":30
  *         for part_idx in range(n_particles):

@@ -32,7 +32,7 @@ cdef void phi_acc(float[:,:] particles, float[:] masses, float G, float eps, flo
                 acc[pos_idx,0] += (particles[part_idx,0] - particles[pos_idx,0]) * acc_mul
                 acc[pos_idx,1] += (particles[part_idx,1] - particles[pos_idx,1]) * acc_mul
                 acc[pos_idx,2] += (particles[part_idx,2] - particles[pos_idx,2]) * acc_mul
-                phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist**2)
+                phi[pos_idx] += (-1) * G * (masses[part_idx] * masses[pos_idx])/(dist)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
