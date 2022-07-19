@@ -52,7 +52,7 @@ def get_prog(n):
 
     """
 
-def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096):
+def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096,gpu_precision = "highp"):
 
     first = time.perf_counter()
 
@@ -66,7 +66,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     n_batches = ceil(n_particles/batch_size)
 
     prog = ctx.program(
-        vertex_shader=get_prog(batch_size),
+        vertex_shader=get_prog(batch_size,plevel=gpu_precision),
         varyings=["acc","phi"],
     )
 
@@ -123,7 +123,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     ids = pd.DataFrame(np.reshape(np.array([np.arange(particles.shape[0])] * (steps+1)).flatten(),(particles.shape[0] * (steps+1),1)),columns=["id"])
     save_vel = pd.DataFrame(np.reshape(save_vel,(save_vel.shape[0] * save_vel.shape[1], save_vel.shape[2])),columns=["vx","vy","vz"])
     save_pos = pd.DataFrame(np.reshape(save_pos,(save_pos.shape[0] * save_pos.shape[1], save_pos.shape[2])),columns=["x","y","z"])
-    save_phi_acc = pd.DataFrame(np.reshape(save_phi_acc,(save_phi_acc.shape[0] * save_phi_acc.shape[1], save_phi_acc.shape[2])),columns=["ax","ay","az","phi"])
+    save_phi_acc = pd.DataFrame(np.reshape(save_phi_acc,(save_phi_acc.shape[0] * save_phi_acc.shape[1], save_phi_acc.shape[2])),columns=["ax","ay","az","gpe"])
 
     second = time.perf_counter()
 

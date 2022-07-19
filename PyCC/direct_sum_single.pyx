@@ -148,7 +148,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1):
     part_out_array = np.asarray(part_out)
 
     part_out_array = np.reshape(part_out_array,(part_out_array.shape[0] * part_out_array.shape[1],part_out_array.shape[2]))
-    part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","phi"])
+    part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","gpe"])
     part_out_df["step"] = part_out_df["step"].astype(int)
     part_out_df["id"] = part_out_df["id"].astype(int)
 

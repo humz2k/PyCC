@@ -1509,7 +1509,7 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_single_evaluate(CYTHON_UNUSED PyObj
   <span class='pyx_macro_api'>__Pyx_DECREF</span>(__pyx_t_2); __pyx_t_2 = 0;
   <span class='pyx_macro_api'>__Pyx_DECREF_SET</span>(__pyx_v_part_out_array, __pyx_t_1);
   __pyx_t_1 = 0;
-</pre><pre class="cython line score-54" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">151</span>:     <span class="n">part_out_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">part_out_array</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;step&quot;</span><span class="p">,</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="s">&quot;y&quot;</span><span class="p">,</span><span class="s">&quot;z&quot;</span><span class="p">,</span><span class="s">&quot;vx&quot;</span><span class="p">,</span><span class="s">&quot;vy&quot;</span><span class="p">,</span><span class="s">&quot;vz&quot;</span><span class="p">,</span><span class="s">&quot;ax&quot;</span><span class="p">,</span><span class="s">&quot;ay&quot;</span><span class="p">,</span><span class="s">&quot;az&quot;</span><span class="p">,</span><span class="s">&quot;phi&quot;</span><span class="p">])</span></pre>
+</pre><pre class="cython line score-54" onclick="(function(s){s.display=s.display==='block'?'none':'block'})(this.nextElementSibling.style)">+<span class="">151</span>:     <span class="n">part_out_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">part_out_array</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;step&quot;</span><span class="p">,</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="s">&quot;y&quot;</span><span class="p">,</span><span class="s">&quot;z&quot;</span><span class="p">,</span><span class="s">&quot;vx&quot;</span><span class="p">,</span><span class="s">&quot;vy&quot;</span><span class="p">,</span><span class="s">&quot;vz&quot;</span><span class="p">,</span><span class="s">&quot;ax&quot;</span><span class="p">,</span><span class="s">&quot;ay&quot;</span><span class="p">,</span><span class="s">&quot;az&quot;</span><span class="p">,</span><span class="s">&quot;gpe&quot;</span><span class="p">])</span></pre>
 <pre class='cython code score-54 '>  <span class='pyx_c_api'>__Pyx_GetModuleGlobalName</span>(__pyx_t_1, __pyx_n_s_pd);<span class='error_goto'> if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 151, __pyx_L1_error)</span>
   <span class='refnanny'>__Pyx_GOTREF</span>(__pyx_t_1);
   __pyx_t_2 = <span class='pyx_c_api'>__Pyx_PyObject_GetAttrStr</span>(__pyx_t_1, __pyx_n_s_DataFrame);<span class='error_goto'> if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 151, __pyx_L1_error)</span>
@@ -1557,9 +1557,9 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_single_evaluate(CYTHON_UNUSED PyObj
   <span class='pyx_macro_api'>__Pyx_INCREF</span>(__pyx_n_s_az);
   <span class='refnanny'>__Pyx_GIVEREF</span>(__pyx_n_s_az);
   <span class='py_macro_api'>PyList_SET_ITEM</span>(__pyx_t_14, 10, __pyx_n_s_az);
-  <span class='pyx_macro_api'>__Pyx_INCREF</span>(__pyx_n_s_phi);
-  <span class='refnanny'>__Pyx_GIVEREF</span>(__pyx_n_s_phi);
-  <span class='py_macro_api'>PyList_SET_ITEM</span>(__pyx_t_14, 11, __pyx_n_s_phi);
+  <span class='pyx_macro_api'>__Pyx_INCREF</span>(__pyx_n_s_gpe);
+  <span class='refnanny'>__Pyx_GIVEREF</span>(__pyx_n_s_gpe);
+  <span class='py_macro_api'>PyList_SET_ITEM</span>(__pyx_t_14, 11, __pyx_n_s_gpe);
   if (<span class='py_c_api'>PyDict_SetItem</span>(__pyx_t_3, __pyx_n_s_columns, __pyx_t_14) &lt; 0) <span class='error_goto'>__PYX_ERR(0, 151, __pyx_L1_error)</span>
   <span class='pyx_macro_api'>__Pyx_DECREF</span>(__pyx_t_14); __pyx_t_14 = 0;
   __pyx_t_14 = <span class='pyx_c_api'>__Pyx_PyObject_Call</span>(__pyx_t_2, __pyx_t_1, __pyx_t_3);<span class='error_goto'> if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 151, __pyx_L1_error)</span>

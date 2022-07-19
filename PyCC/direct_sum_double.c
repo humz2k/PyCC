@@ -2374,9 +2374,9 @@ static const char __pyx_k_vx[] = "vx";
 static const char __pyx_k_vy[] = "vy";
 static const char __pyx_k_vz[] = "vz";
 static const char __pyx_k_eps[] = "eps";
+static const char __pyx_k_gpe[] = "gpe";
 static const char __pyx_k_new[] = "__new__";
 static const char __pyx_k_obj[] = "obj";
-static const char __pyx_k_phi[] = "phi";
 static const char __pyx_k_base[] = "base";
 static const char __pyx_k_dict[] = "__dict__";
 static const char __pyx_k_main[] = "__main__";
@@ -2545,6 +2545,7 @@ static PyObject *__pyx_n_s_fortran;
 static PyObject *__pyx_n_u_fortran;
 static PyObject *__pyx_n_s_getstate;
 static PyObject *__pyx_kp_s_got_differing_extents_in_dimensi;
+static PyObject *__pyx_n_s_gpe;
 static PyObject *__pyx_n_s_id;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_itemsize;
@@ -2571,7 +2572,6 @@ static PyObject *__pyx_n_s_part_out_df;
 static PyObject *__pyx_n_s_particles;
 static PyObject *__pyx_n_s_pd;
 static PyObject *__pyx_n_s_perf_counter;
-static PyObject *__pyx_n_s_phi;
 static PyObject *__pyx_n_s_pickle;
 static PyObject *__pyx_n_s_pyx_PickleError;
 static PyObject *__pyx_n_s_pyx_checksum;
@@ -4244,7 +4244,7 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_double_evaluate(CYTHON_UNUSED PyObj
  *     part_out_array = np.asarray(part_out)
  * 
  *     part_out_array = np.reshape(part_out_array,(part_out_array.shape[0] * part_out_array.shape[1],part_out_array.shape[2]))             # <<<<<<<<<<<<<<
- *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","phi"])
+ *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","gpe"])
  *     part_out_df["step"] = part_out_df["step"].astype(int)
  */
   __Pyx_GetModuleGlobalName(__pyx_t_3, __pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 150, __pyx_L1_error)
@@ -4332,7 +4332,7 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_double_evaluate(CYTHON_UNUSED PyObj
   /* "PyCC/direct_sum_double.pyx":151
  * 
  *     part_out_array = np.reshape(part_out_array,(part_out_array.shape[0] * part_out_array.shape[1],part_out_array.shape[2]))
- *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","phi"])             # <<<<<<<<<<<<<<
+ *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","gpe"])             # <<<<<<<<<<<<<<
  *     part_out_df["step"] = part_out_df["step"].astype(int)
  *     part_out_df["id"] = part_out_df["id"].astype(int)
  */
@@ -4383,9 +4383,9 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_double_evaluate(CYTHON_UNUSED PyObj
   __Pyx_INCREF(__pyx_n_s_az);
   __Pyx_GIVEREF(__pyx_n_s_az);
   PyList_SET_ITEM(__pyx_t_14, 10, __pyx_n_s_az);
-  __Pyx_INCREF(__pyx_n_s_phi);
-  __Pyx_GIVEREF(__pyx_n_s_phi);
-  PyList_SET_ITEM(__pyx_t_14, 11, __pyx_n_s_phi);
+  __Pyx_INCREF(__pyx_n_s_gpe);
+  __Pyx_GIVEREF(__pyx_n_s_gpe);
+  PyList_SET_ITEM(__pyx_t_14, 11, __pyx_n_s_gpe);
   if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_columns, __pyx_t_14) < 0) __PYX_ERR(0, 151, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
   __pyx_t_14 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_14)) __PYX_ERR(0, 151, __pyx_L1_error)
@@ -4398,7 +4398,7 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_double_evaluate(CYTHON_UNUSED PyObj
 
   /* "PyCC/direct_sum_double.pyx":152
  *     part_out_array = np.reshape(part_out_array,(part_out_array.shape[0] * part_out_array.shape[1],part_out_array.shape[2]))
- *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","phi"])
+ *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","gpe"])
  *     part_out_df["step"] = part_out_df["step"].astype(int)             # <<<<<<<<<<<<<<
  *     part_out_df["id"] = part_out_df["id"].astype(int)
  * 
@@ -4427,7 +4427,7 @@ static PyObject *__pyx_pf_4PyCC_17direct_sum_double_evaluate(CYTHON_UNUSED PyObj
   __Pyx_DECREF(__pyx_t_14); __pyx_t_14 = 0;
 
   /* "PyCC/direct_sum_double.pyx":153
- *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","phi"])
+ *     part_out_df = pd.DataFrame(part_out_array,columns=["step","id","x","y","z","vx","vy","vz","ax","ay","az","gpe"])
  *     part_out_df["step"] = part_out_df["step"].astype(int)
  *     part_out_df["id"] = part_out_df["id"].astype(int)             # <<<<<<<<<<<<<<
  * 
@@ -19379,6 +19379,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_u_fortran, __pyx_k_fortran, sizeof(__pyx_k_fortran), 0, 1, 0, 1},
   {&__pyx_n_s_getstate, __pyx_k_getstate, sizeof(__pyx_k_getstate), 0, 0, 1, 1},
   {&__pyx_kp_s_got_differing_extents_in_dimensi, __pyx_k_got_differing_extents_in_dimensi, sizeof(__pyx_k_got_differing_extents_in_dimensi), 0, 0, 1, 0},
+  {&__pyx_n_s_gpe, __pyx_k_gpe, sizeof(__pyx_k_gpe), 0, 0, 1, 1},
   {&__pyx_n_s_id, __pyx_k_id, sizeof(__pyx_k_id), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_itemsize, __pyx_k_itemsize, sizeof(__pyx_k_itemsize), 0, 0, 1, 1},
@@ -19405,7 +19406,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_particles, __pyx_k_particles, sizeof(__pyx_k_particles), 0, 0, 1, 1},
   {&__pyx_n_s_pd, __pyx_k_pd, sizeof(__pyx_k_pd), 0, 0, 1, 1},
   {&__pyx_n_s_perf_counter, __pyx_k_perf_counter, sizeof(__pyx_k_perf_counter), 0, 0, 1, 1},
-  {&__pyx_n_s_phi, __pyx_k_phi, sizeof(__pyx_k_phi), 0, 0, 1, 1},
   {&__pyx_n_s_pickle, __pyx_k_pickle, sizeof(__pyx_k_pickle), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_PickleError, __pyx_k_pyx_PickleError, sizeof(__pyx_k_pyx_PickleError), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_checksum, __pyx_k_pyx_checksum, sizeof(__pyx_k_pyx_checksum), 0, 0, 1, 1},

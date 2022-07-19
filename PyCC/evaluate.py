@@ -9,16 +9,16 @@ import direct_sum_single
 import gpu_single
 import gpu_half
 
-def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False):
+def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False, gpu_precision = "highp"):
     particles = particle_df.loc[:,["x","y","z"]].to_numpy()
     velocities = particle_df.loc[:,["vx","vy","vz"]].to_numpy()
     masses = particle_df.loc[:,"mass"].to_numpy()
 
     if accelerate:
         if precision == "f4":
-            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt)
+            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision)
         if precision == "f2":
-            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt)
+            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision)
     else:
         if precision == "f8":
             return direct_sum_double.evaluate(particles,velocities,masses,steps,eps,G,dt)

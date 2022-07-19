@@ -70,7 +70,6 @@ class Distributions(object):
         def mu(x):
             return np.log(1.0 + x) - x / (1.0 + x)
 
-        
         def qnfw(p, c, logp=False):
             if (logp):
                 p = np.exp(p)
@@ -82,30 +81,11 @@ class Distributions(object):
         def rnfw(n, c,a):
             return qnfw(np.random.rand(int(n)), c=c * a)
         
-
         Rvir = c*Rs
         aRvir = a * Rvir
-
-        #def inverseCDF(p,a,c,Rs):
-        #    b = p * (np.log(1+a*c) - (a*c)/(1+a*c))
-        #    W = np.real(special.lambertw(np.exp((-1)/(b+1))))
-        #    return (-Rs/W) - Rs
-        
-        #def get_r(n):
-        ##    randoms = np.random.rand(int(n))
-        #    out = np.zeros((n),dtype=float)
-        #    for idx,rand in enumerate(randoms):
-        #        out[idx] = inverseCDF(rand,a,c,Rs)
-        #    return out
-
-        #maxMass = 4*np.pi*p0*(Rs**3)*mu(c)
-        #rint(maxMass)
-        #maxMass = 4*np.pi*p0*(Rs**3)*(np.log(1+Rvir/Rs) - (Rvir/Rs)/(1+(Rvir/Rs)))
-        #radiuses = rnfw(n,c) * Rvir
         
         maxMass = 4 * np.pi * p0 * (Rs**3) * (np.log(1+a*c) - ((a*c)/(1+a*c)))
-        print(maxMass)
-        #radiuses = get_r(n)
+
         radiuses = rnfw(n,c,a) * aRvir
 
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
@@ -183,3 +163,18 @@ def ray_rs(length,nsteps):
 def points2radius(points):
     points = points.loc[:,["x","y","z"]].to_numpy()
     return spatial.distance.cdist(np.array([[0,0,0]]),points).flatten()
+
+def outdf2numpy(df):
+    steps = np.unique(df.loc[:,"step"].to_numpy())
+    nsteps = steps.shape[0]
+    ids = np.unique(df.loc[:,"id"].to_numpy())
+    nparticles = ids.shape[0]
+    pos = df.loc[:,["x","y","z"]].to_numpy()
+    pos = pos.reshape(nsteps,nparticles,3)
+    vel = df.loc[:,["vx","vy","vz"]].to_numpy()
+    vel = vel.reshape(nsteps,nparticles,3)
+    acc = df.loc[:,["ax","ay","az"]].to_numpy()
+    acc = acc.reshape(nsteps,nparticles,3)
+    gpe = df.loc[:,["gpe"]].to_numpy()
+    gpe = gpe.reshape(nsteps,nparticles,1)
+    return {"pos":pos,"vel":vel,"acc":acc,"gpe":gpe}
