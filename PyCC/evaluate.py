@@ -8,6 +8,7 @@ import direct_sum_double
 import direct_sum_single
 import gpu_single
 import gpu_half
+import numpy as np
 
 def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False, gpu_precision = "highp"):
     particles = particle_df.loc[:,["x","y","z"]].to_numpy()
@@ -25,3 +26,16 @@ def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", acc
         elif precision == "f4":
             return direct_sum_single.evaluate(particles,velocities,masses,steps,eps,G,dt)
 
+def find_timestep(df,start_timestep,atol,**kwargs):
+    outdf,stats = evaluate(df,dt=start_timestep,steps=1,**kwargs)
+    out_pos = outdf[outdf["step"] == 1].loc[:,["x","y","z"]].to_numpy()
+    
+    testdf,stats = evaluate(df,dt=start_timestep/2,steps=2,**kwargs)
+    test_pos = testdf[testdf["step"] == 2].loc[:,["x","y","z"]].to_numpy()
+
+    diff = np.max(np.abs(out_pos - test_pos))
+
+    if atol > diff:
+        return start_timestep,diff
+    else:
+        return find_timestep(df,start_timestep/2,atol,**kwargs)

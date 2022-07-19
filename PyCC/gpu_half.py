@@ -6,26 +6,27 @@ from scipy import constants
 from math import ceil
 import pandas as pd
 
-def get_prog(n):
+
+def get_prog(n, plevel = "lowp"):
     return """
     #version 410
 
-    in lowp vec4 pos;
+    in """ + plevel + """ vec4 pos;
 
-    in lowp float eps;
-    in lowp float G;
+    in """ + plevel + """ float eps;
+    in """ + plevel + """ float G;
 
-    out lowp float phi;
-    out lowp vec3 acc;
+    out """ + plevel + """ float phi;
+    out """ + plevel + """ vec3 acc;
 
     uniform myBlock{
-        lowp vec4 parts[""" + str(n) + """];
+        """ + plevel + """ vec4 parts[""" + str(n) + """];
     };
 
     uniform int n;
 
-    lowp float d;
-    lowp float acc_mul;
+    """ + plevel + """ float d;
+    """ + plevel + """ float acc_mul;
 
     void main() {
         phi = 0.;
@@ -52,7 +53,8 @@ def get_prog(n):
 
     """
 
-def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096,gpu_precision = "highp"):
+
+def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096,gpu_precision = "lowp"):
 
     first = time.perf_counter()
 

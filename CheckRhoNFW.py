@@ -12,7 +12,7 @@ Rvir = c*rs
 def rho(r,p0,Rs):
     return p0/((r/Rs) * ((1+(r/Rs))**2))
 
-df = PyCC.Distributions.NFW(rs,ps,c,100,n)
+df = PyCC.Distributions.NFW(n,rs,ps,c,100)
 
 mass = df.loc[:,"mass"].to_numpy()[0]
 

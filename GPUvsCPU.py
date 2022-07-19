@@ -23,4 +23,6 @@ acc_diff = np.sum(acc_diff,axis=2)
 
 plt.plot(acc_diff,color="blue",alpha=0.5)
 plt.xlabel("Timestep")
+plt.ylabel(r"$\vec{a}_{cpuf4} - \vec{a}_{gpuf4}$")
+plt.tight_layout()
 plt.show()

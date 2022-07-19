@@ -57,7 +57,6 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gp
     first = time.perf_counter()
 
     ctx = moderngl.create_context(standalone=True)
-    print(ctx.info)
 
     fbo = ctx.simple_framebuffer((1,1))
     fbo.use()

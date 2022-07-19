@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import PyCC.gpu_analysis as gpu_analysis
 
-#plummer = PyCC.Distributions.Plummer(1000,1,1,1)
-n = 100
+n = 10000
 G = 1
 rs = 1
 c = 10
@@ -33,7 +32,6 @@ summed = out.loc[:,"phi"].to_numpy()
 
 plt.plot(PyCC.points2radius(ray)/Rvir,analytics,color="red",label="Analytic")
 plt.scatter(PyCC.points2radius(ray)/Rvir,summed,label=r"$\phi along ray$")
-#plt.scatter(particle_rs/Rvir,particle_phi)
 plt.xlabel(r"$\frac{r}{R_{vir}}$")
 plt.ylabel(r"$\phi$")
 plt.show()

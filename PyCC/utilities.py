@@ -65,7 +65,7 @@ class Distributions(object):
         return df
 
     @staticmethod
-    def NFW(Rs,p0,c,a,n,file=None):
+    def NFW(n,Rs,p0,c,a,G=1,file=None):
         
         def mu(x):
             return np.log(1.0 + x) - x / (1.0 + x)
@@ -78,13 +78,18 @@ class Distributions(object):
             p *= mu(c)
             return (-(1.0/np.real(special.lambertw(-np.exp(-p-1))))-1)/c
 
-        def rnfw(n, c,a):
+        def rnfw(n,c,a):
             return qnfw(np.random.rand(int(n)), c=c * a)
         
+        def vcirc(r,c,Rs):
+            x = r/Rs
+            return  np.sqrt((1/x) * (np.log(1+c*x) - (c*x)/(1+c*x))/(np.log(1+c)-c/(1+c)))
+                    
         Rvir = c*Rs
         aRvir = a * Rvir
         
         maxMass = 4 * np.pi * p0 * (Rs**3) * (np.log(1+a*c) - ((a*c)/(1+a*c)))
+        virialMass = 4 * np.pi * p0 * (Rs**3) * (np.log(1+c) - (c/(1+c)))
 
         radiuses = rnfw(n,c,a) * aRvir
 
@@ -93,9 +98,23 @@ class Distributions(object):
         x = radiuses * np.sin(theta) * np.cos(phi)
         y = radiuses * np.sin(theta) * np.sin(phi)
         z = radiuses * np.cos(theta)
+
+        Vvir = np.sqrt((G*virialMass)/Rvir)
+
+        vel = np.zeros_like(radiuses)
+        for idx,r in enumerate(radiuses):
+            vel[idx] = vcirc(r,c,Rs) * Vvir
+        
+        phi = np.random.uniform(low=0,high=2*np.pi,size=n)
+        theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
+
+        x_vel = vel * np.sin(theta) * np.cos(phi)
+        y_vel = vel * np.sin(theta) * np.sin(phi)
+        z_vel = vel * np.cos(theta)
+
         particle_mass = maxMass/n
         particles = np.column_stack([x,y,z])
-        velocities = np.zeros_like(particles,dtype=float)
+        velocities = np.column_stack([x_vel,y_vel,z_vel])
         masses = pd.DataFrame(np.full((1,n),particle_mass).T,columns=["mass"])
         particles = pd.DataFrame(particles,columns=["x","y","z"])
         velocities = pd.DataFrame(velocities,columns=["vx","vy","vz"])
