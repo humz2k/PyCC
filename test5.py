@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 
 n = 100000
 G = 1
-rs = 10
-c = 10
+rs = 1
+c = 1
 ps = 10
 Rvir = c*rs
 
 def rho(r,p0,Rs):
     return p0/((r/Rs) * ((1+(r/Rs))**2))
 
-df = PyCC.Distributions.NFW(rs,ps,c,n)
+df = PyCC.Distributions.NFW(rs,ps,c,100,n)
 
 mass = df.loc[:,"mass"].to_numpy()[0]
 
@@ -29,6 +29,6 @@ plt.plot(xs/Rvir,(ys*mass)/vols)
 plt.plot(xs/Rvir,rhos)
 plt.yscale('log')
 plt.xscale('log')
-plt.xlabel(r"$\frac{r}{R_s}$")
-plt.ylabel(r"$\rho$")
+plt.xlabel(r"$\log[\frac{r}{R_s}]$")
+plt.ylabel(r"$\log[\rho]$")
 plt.show()

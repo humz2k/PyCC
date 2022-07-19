@@ -65,10 +65,12 @@ class Distributions(object):
         return df
 
     @staticmethod
-    def NFW(Rs,p0,c,n,file=None):
+    def NFW(Rs,p0,c,a,n,file=None):
+        
         def mu(x):
             return np.log(1.0 + x) - x / (1.0 + x)
 
+        
         def qnfw(p, c, logp=False):
             if (logp):
                 p = np.exp(p)
@@ -77,14 +79,34 @@ class Distributions(object):
             p *= mu(c)
             return (-(1.0/np.real(special.lambertw(-np.exp(-p-1))))-1)/c
 
-        def rnfw(n, c):
-            return qnfw(np.random.rand(int(n)), c=c)
+        def rnfw(n, c,a):
+            return qnfw(np.random.rand(int(n)), c=c * a)
+        
 
         Rvir = c*Rs
+        aRvir = a * Rvir
+
+        #def inverseCDF(p,a,c,Rs):
+        #    b = p * (np.log(1+a*c) - (a*c)/(1+a*c))
+        #    W = np.real(special.lambertw(np.exp((-1)/(b+1))))
+        #    return (-Rs/W) - Rs
+        
+        #def get_r(n):
+        ##    randoms = np.random.rand(int(n))
+        #    out = np.zeros((n),dtype=float)
+        #    for idx,rand in enumerate(randoms):
+        #        out[idx] = inverseCDF(rand,a,c,Rs)
+        #    return out
 
         #maxMass = 4*np.pi*p0*(Rs**3)*mu(c)
-        maxMass = 4*np.pi*p0*(Rs**3)*(np.log(1+Rvir/Rs) - (Rvir/Rs)/(1+(Rvir/Rs)))
-        radiuses = rnfw(n,c) * Rvir
+        #rint(maxMass)
+        #maxMass = 4*np.pi*p0*(Rs**3)*(np.log(1+Rvir/Rs) - (Rvir/Rs)/(1+(Rvir/Rs)))
+        #radiuses = rnfw(n,c) * Rvir
+        
+        maxMass = 4 * np.pi * p0 * (Rs**3) * (np.log(1+a*c) - ((a*c)/(1+a*c)))
+        print(maxMass)
+        #radiuses = get_r(n)
+        radiuses = rnfw(n,c,a) * aRvir
 
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))

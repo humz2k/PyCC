@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import PyCC.gpu_analysis as gpu_analysis
 
 #plummer = PyCC.Distributions.Plummer(1000,1,1,1)
-n = 1000
+n = 10000
 G = 1
 rs = 1
 c = 1
 ps = 10
 Rvir = rs * c
 
-df = PyCC.Distributions.NFW(rs,ps,c,n)
+df = PyCC.Distributions.NFW(rs,ps,c,100,n)
 
 ray = PyCC.ray(np.array([1,0,0]),Rvir,25)
 
@@ -30,8 +30,8 @@ out,stats = gpu_analysis.evaluate(particles,masses,[0],pos)
 analytics = PyCC.Analytic.NFW(rs,ps,ray,G)
 summed = out.loc[:,"phi"].to_numpy()
 
-#plt.plot(PyCC.points2radius(ray)/Rvir,analytics)
-plt.scatter(PyCC.points2radius(ray)/Rvir,summed-analytics)
+plt.plot(PyCC.points2radius(ray)/Rvir,analytics)
+plt.scatter(PyCC.points2radius(ray)/Rvir,summed)
 #plt.scatter(PyCC.points2radius(df)/Rvir,phi/masses[0])
 plt.xlabel(r"$\frac{r}{R_{vir}}$")
 plt.ylabel(r"$\phi$")
