@@ -2,13 +2,13 @@ import PyCC
 import numpy as np
 import matplotlib.pyplot as plt
 
-n = 100000
+n = 1000000
 G = 1
 rs = 1
 c = 1
 ps = 1
 Rvir = c*rs
-nsteps = 50
+nsteps = 1
 
 df = PyCC.Distributions.NFW(n,rs,ps,c,100,1)
 particle_mass = df.loc[:,"mass"][0]
