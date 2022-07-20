@@ -52,7 +52,7 @@ def get_prog(n, plevel = "highp"):
 
     """
 
-def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gpu_precision="highp"):
+def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, batch_size = 4096, gpu_precision="highp"):
 
     first = time.perf_counter()
 
@@ -63,11 +63,10 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gp
 
     n_particles = particles.shape[0]
 
-    batch_size = 4096
-    n_batches = ceil(n_particles/4096)
+    n_batches = ceil(n_particles/batch_size)
 
     prog = ctx.program(
-        vertex_shader=get_prog(4096,plevel=gpu_precision),
+        vertex_shader=get_prog(batch_size,plevel=gpu_precision),
         varyings=["acc","phi"],
     )
 
@@ -93,7 +92,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gp
     save_vel[0] = current_vel
     save_pos[0] = current_pos
 
-    out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles_f4,masses_f4,n_particles,n_batches)
+    out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles_f4,masses_f4,n_particles,n_batches,batch_size)
 
     save_phi_acc[0] = out
     current_acc = out[:,[0,1,2]]
@@ -106,7 +105,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gp
         save_vel[step+1] = current_vel
         save_pos[step+1] = current_pos
 
-        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos.astype("f4"),masses_f4,n_particles,n_batches)
+        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos.astype("f4"),masses_f4,n_particles,n_batches,batch_size)
 
         save_phi_acc[step+1] = out
         current_acc = out[:,[0,1,2]]
@@ -130,29 +129,29 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1, gp
 
     return pd.concat((step_labels,ids,save_pos,save_vel,save_phi_acc),axis=1),{"eval_time":second-first}
 
-def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles,n_batches):
+def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles,n_batches,batch_size=4096):
     combined = np.concatenate((particles,masses),axis=1).tobytes()
 
     out = np.zeros((n_particles,4),dtype=np.float32)
 
-    current_n = 4096
+    current_n = batch_size
     if n_particles < current_n:
         current_n = n_particles
 
-    prog.__getitem__("n").write(np.array([[4096]]).astype(np.int32).tobytes())
+    prog.__getitem__("n").write(np.array([[batch_size]]).astype(np.int32).tobytes())
     pos_buffer.write(combined)
 
     start = 0
     end = n_particles
     for batch in range(n_batches - 1):
         start = batch * 4 * 4
-        end = batch * 4 * 4 + (4096) * 4 * 4 
+        end = batch * 4 * 4 + (batch_size) * 4 * 4 
         allParts.write(combined[start:end])
         vao.transform(out_buffer)
         out += np.ndarray((n_particles,4),"f4",out_buffer.read())
 
-    prog.__getitem__("n").write(np.array([[n_particles - (n_batches-1) * 4096]]).astype(np.int32).tobytes())
-    allParts.write(combined[(n_batches-1) * 4096 * 4 * 4:n_particles * 4 * 4])
+    prog.__getitem__("n").write(np.array([[n_particles - (n_batches-1) * batch_size]]).astype(np.int32).tobytes())
+    allParts.write(combined[(n_batches-1) * batch_size * 4 * 4:n_particles * 4 * 4])
 
     vao.transform(out_buffer)
 

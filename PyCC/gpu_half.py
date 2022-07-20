@@ -64,7 +64,6 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     fbo.use()
 
     n_particles = particles.shape[0]
-
     n_batches = ceil(n_particles/batch_size)
 
     prog = ctx.program(

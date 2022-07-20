@@ -17,9 +17,9 @@ def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", acc
 
     if accelerate:
         if precision == "f4":
-            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision)
+            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision)
         if precision == "f2":
-            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision)
+            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision)
     else:
         if precision == "f8":
             return direct_sum_double.evaluate(particles,velocities,masses,steps,eps,G,dt)
