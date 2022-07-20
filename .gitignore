@@ -153,5 +153,3 @@ cython_debug/
 *.csv
 *.html
 *.c
-
-Archive/
