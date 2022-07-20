@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 from scipy import spatial
 from scipy import special
+import warnings
+warnings.filterwarnings("ignore")
 
 class Distributions(object):
     @staticmethod
-    def Uniform(n,r,p,file=None):
+    def Uniform(n,r=1,p=1,G=1,file=None):
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
         particle_r = r * ((np.random.uniform(low=0,high=1,size=n))**(1/3))
@@ -60,12 +62,13 @@ class Distributions(object):
         particles = pd.DataFrame(particles,columns=["x","y","z"])
         velocities = pd.DataFrame(velocities,columns=["vx","vy","vz"])
         df = pd.concat((particles,velocities,masses),axis=1)
+        df.insert(0,"id",range(len(df)))
         if file != None:
             df.to_csv(file,index=False)
         return df
 
     @staticmethod
-    def NFW(n,Rs,p0,c,a,G=1,file=None):
+    def NFW(n,Rs=1,p0=1,c=1,a=100,G=1,file=None):
         
         def mu(x):
             return np.log(1.0 + x) - x / (1.0 + x)
@@ -154,6 +157,17 @@ class Analytic(object):
         for idx,pos in enumerate(positions):
             out[idx] = phi(Rs,pos)
         return out
+    
+    @staticmethod
+    def Plummer(a,M,positions,G):
+        positions = positions.loc[:,["x","y","z"]].to_numpy()
+        def phi(a,M,G,pos):
+            pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
+            return (-1) * G * M * (1/np.sqrt((pos_r**2) + (a**2)))
+        out = np.zeros((len(positions)),dtype=float)
+        for idx,pos in enumerate(positions):
+            out[idx] = phi(a,M,G,pos)
+        return out
 
 def angles2vectors(alphas,betas):
     x = np.cos(alphas) * np.cos(betas)
@@ -197,3 +211,17 @@ def outdf2numpy(df):
     gpe = df.loc[:,["gpe"]].to_numpy()
     gpe = gpe.reshape(nsteps,nparticles,1)
     return {"pos":pos,"vel":vel,"acc":acc,"gpe":gpe}
+
+def downsample(df,amount):
+    assert amount >= 1
+    amount = 1/amount
+    ids = np.unique(df.loc[:,"id"].to_numpy())
+    particle_mass = df.loc[:,"mass"][0]
+    total_mass = particle_mass * ids.shape[0]
+    new_n = int(ids.shape[0] * amount)
+    new_mass = (total_mass/new_n) 
+    choices = np.random.choice(ids,new_n,replace=False)
+    new_df = df[df["id"].isin(choices)]
+    new_df.loc[:,"id"] = range(len(new_df))
+    new_df.loc[:,"mass"] = [new_mass for i in range(len(new_df))]
+    return new_df
