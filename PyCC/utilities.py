@@ -8,6 +8,29 @@ warnings.filterwarnings("ignore")
 class Distributions(object):
     @staticmethod
     def Uniform(n,r=1,p=1,G=1,file=None):
+        """Generates a sample from a homogenous distribution.
+
+        A function that takes in the number of particles, the radius, the density and the G value, and returns a sample.
+
+        Parameters
+        ----------
+        n : int
+            The number of particles in the resulting sample.
+        r : float
+            The radius of the resulting sample. If unspecified, the radius defaults to 1.
+        p : float
+            The density of the resulting sample. If unspecified, the density defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+        file : str
+            The file to save the resulting sample to (in .csv format). If unspecified, the sample is not saved.
+        
+        Returns
+        -------
+        pd.DataFrame
+            The sample
+
+        """
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
         particle_r = r * ((np.random.uniform(low=0,high=1,size=n))**(1/3))
@@ -28,6 +51,29 @@ class Distributions(object):
 
     @staticmethod
     def Plummer(n,a=1,M=1,G=1,file=None):
+        """Generates a sample from a Plummer density profile.
+
+        A function that takes in the number of particles, the scale radius, the total mass and the G value, and returns a sample.
+
+        Parameters
+        ----------
+        n : int
+            The number of particles in the resulting sample.
+        a : float
+            The scale radius of the resulting sample. If unspecified, the scale radius defaults to 1.
+        M : float
+            The total mass of the resulting sample. If unspecified, the mass defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+        file : str
+            The file to save the resulting sample to (in .csv format). If unspecified, the sample is not saved.
+        
+        Returns
+        -------
+        pd.DataFrame
+            The sample
+
+        """
         phi = np.random.uniform(low=0,high=2*np.pi,size=n)
         theta = np.arccos(np.random.uniform(low=-1,high=1,size=n))
         particle_r = a / np.sqrt(((np.random.uniform(low=0,high=1,size=n)**(-2./3.))) - 1)
@@ -69,6 +115,33 @@ class Distributions(object):
 
     @staticmethod
     def NFW(n,Rs=1,p0=1,c=1,a=100,G=1,file=None):
+        """Generates a sample from a NFW density profile.
+
+        A function that takes in the number of particles, the scale radius, p0, the concentration, the number of times Rvir to sample up to and the G value, and returns a sample.
+
+        Parameters
+        ----------
+        n : int
+            The number of particles in the resulting sample.
+        Rs : float
+            The scale radius of the resulting sample. If unspecified, the scale radius defaults to 1.
+        p0 : float
+            The p0 density of the resulting sample. If unspecified, p0 defaults to 1.
+        c : float
+            The concentration of the resulting sample. If unspecified, the concentration defaults to 1.
+        a : float
+            How many times Rvir to sampled up to. If unspecified, a defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+        file : str
+            The file to save the resulting sample to (in .csv format). If unspecified, the sample is not saved.
+        
+        Returns
+        -------
+        pd.DataFrame
+            The sample
+
+        """
         
         def mu(x):
             return np.log(1.0 + x) - x / (1.0 + x)
@@ -129,7 +202,7 @@ class Distributions(object):
 
 class Analytic(object):
     @staticmethod
-    def Uniform(r,p,positions,G):
+    def Uniform(positions,r,p,G):
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(r,p,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -146,7 +219,7 @@ class Analytic(object):
         return out
 
     @staticmethod
-    def NFW(Rs,p0,positions,G):
+    def NFW(positions,Rs,p0,G):
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(Rs,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -159,7 +232,7 @@ class Analytic(object):
         return out
     
     @staticmethod
-    def Plummer(a,M,positions,G):
+    def Plummer(positions,a,M,G):
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(a,M,G,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -170,12 +243,44 @@ class Analytic(object):
         return out
 
 def angles2vectors(alphas,betas):
+    """Converts 2 angles to a 3D vector.
+
+    A function that takes in arrays of 2 angles and returns 3D vectors.
+
+    Parameters
+    ----------
+    alphas : array_like
+        The alpha angles.
+    betas : array_like
+        The beta angles.
+    
+    Returns
+    -------
+    numpy.ndarray
+        An array of 3D vectors.
+
+    """
     x = np.cos(alphas) * np.cos(betas)
     z = np.sin(alphas) * np.cos(betas)
     y = np.sin(betas)
     return np.column_stack([x,y,z])
 
 def randangles(size=10):
+    """Generates 2 arrays of random angles.
+
+    A function that takes in a size and returns 2 arrays of random angles.
+
+    Parameters
+    ----------
+    size : int
+        The number of angles to generate.
+    
+    Returns
+    -------
+    tuple
+        Two arrays of shape (size,) of random angles from 0,2*pi.
+
+    """
     return np.random.uniform(0,2*np.pi,size=size),np.random.uniform(0,2*np.pi,size=size)
 
 def random_vectors(size=1):
