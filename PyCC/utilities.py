@@ -27,7 +27,7 @@ class Distributions(object):
         
         Returns
         -------
-        pd.DataFrame
+        pandas.DataFrame
             The sample
 
         """
@@ -70,7 +70,7 @@ class Distributions(object):
         
         Returns
         -------
-        pd.DataFrame
+        pandas.DataFrame
             The sample
 
         """
@@ -138,7 +138,7 @@ class Distributions(object):
         
         Returns
         -------
-        pd.DataFrame
+        pandas.DataFrame
             The sample
 
         """
@@ -202,7 +202,28 @@ class Distributions(object):
 
 class Analytic(object):
     @staticmethod
-    def Uniform(positions,r,p,G):
+    def Uniform(positions,r=1,p=1,G=1):
+        """Returns the analytic potential of a Uniform Density profile.
+
+        A function that takes in coordinates, the radius, the density and the G value, and returns the analytic potential at the coordinates.
+
+        Parameters
+        ----------
+        positions : pd.DataFrame
+            A DataFrame of the positions to evaluate the potential at.
+        r : float
+            The radius. If unspecified, the radius defaults to 1.
+        p : float
+            The density. If unspecified, the density defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+
+        Returns
+        -------
+        numpy.ndarray
+            The potentials at the points with shape equal to the number of positions.
+
+        """
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(r,p,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -219,7 +240,28 @@ class Analytic(object):
         return out
 
     @staticmethod
-    def NFW(positions,Rs,p0,G):
+    def NFW(positions,Rs=1,p0=1,G=1):
+        """Returns the analytic potential of a NFW profile.
+
+        A function that takes in coordinates, the scale radius, p0, and the G value, and returns the analytic potential at the coordinates.
+
+        Parameters
+        ----------
+        positions : pd.DataFrame
+            A DataFrame of the positions to evaluate the potential at.
+        Rs : float
+            The scale radius. If unspecified, the scale radius defaults to 1.
+        p0 : float
+            The p0 density. If unspecified, p0 defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+        
+        Returns
+        -------
+        numpy.ndarray
+            The potentials at the points with shape equal to the number of positions.
+
+        """
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(Rs,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -232,7 +274,28 @@ class Analytic(object):
         return out
     
     @staticmethod
-    def Plummer(positions,a,M,G):
+    def Plummer(positions,a=1,M=1,G=1):
+        """Returns the analytic potential of a Plummer profile.
+
+        A function that takes in coordinates, the scale radius, the total mass and the G value, and returns the analytic potential at the coordinates.
+
+        Parameters
+        ----------
+        positions : pd.DataFrame
+            A DataFrame of the positions to evaluate the potential at.
+        a : float
+            The scale radius of the resulting sample. If unspecified, the scale radius defaults to 1.
+        M : float
+            The total mass of the resulting sample. If unspecified, the mass defaults to 1.
+        G : float
+            The G constant for the simulation. If unspecified, the G constant defaults to 1.
+        
+        Returns
+        -------
+        numpy.ndarray
+            The potentials at the points with shape equal to the number of positions.
+
+        """
         positions = positions.loc[:,["x","y","z"]].to_numpy()
         def phi(a,M,G,pos):
             pos_r = spatial.distance.cdist(np.array([[0,0,0]]),np.reshape(pos,(1,)+pos.shape)).flatten()[0]
@@ -243,9 +306,9 @@ class Analytic(object):
         return out
 
 def angles2vectors(alphas,betas):
-    """Converts 2 angles to a 3D vector.
+    """Converts 2 floats or arrays of angles to (a) normalized 3D vector(s).
 
-    A function that takes in arrays of 2 angles and returns 3D vectors.
+    A function that takes in arrays of 2 angles and returns normalized 3D vectors.
 
     Parameters
     ----------
@@ -257,7 +320,7 @@ def angles2vectors(alphas,betas):
     Returns
     -------
     numpy.ndarray
-        An array of 3D vectors.
+        An array of normalized 3D vectors, with shape (alphas.shape[0],3).
 
     """
     x = np.cos(alphas) * np.cos(betas)
@@ -273,7 +336,7 @@ def randangles(size=10):
     Parameters
     ----------
     size : int
-        The number of angles to generate.
+        The number of angles to generate. If unspecified, size defaults to 10.
     
     Returns
     -------
@@ -284,9 +347,46 @@ def randangles(size=10):
     return np.random.uniform(0,2*np.pi,size=size),np.random.uniform(0,2*np.pi,size=size)
 
 def random_vectors(size=1):
+    """Generates a random array of normalized 3D vectors.
+
+    A function that takes in a size and returns 2 arrays of random angles.
+
+    Parameters
+    ----------
+    size : int
+        The number of angles to generate. If unspecified, the size defaults to 1.
+    
+    Returns
+    -------
+    numpy.ndarray
+        An array of random normalized 3D vectors with shape (size,3).
+
+    """
     return angles2vectors(*randangles(size))
 
 def ray(vector,length,nsteps,file=None):
+    """Generates a ray from a vector, length and number of steps.
+
+    A function that takes in a vector, a length, a number of steps, and returns a DataFrame of points along the vector.
+
+    Parameters
+    ----------
+    vector : numpy.ndarray
+        The vector of the ray, with shape (3,).
+    length : float
+        The length of the ray.
+    nsteps : int
+        The number of steps for the returned points along the vector.
+    file : str
+        The filename to save the resulting DataFrame to (.csv). If unspecified, the DataFrame will not be saved.
+    
+    
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame of nsteps 3D points along a ray pointing in direction vector with length length.
+
+    """
     vector = np.reshape(vector/np.linalg.norm(vector),(1,) + vector.shape)
     rs = np.reshape(np.linspace(0,length,nsteps),(1,nsteps)).T
     points = rs * vector
@@ -299,6 +399,21 @@ def ray_rs(length,nsteps):
     return np.linspace(0,length,nsteps)
 
 def points2radius(points):
+    """Converts 3D points to radiuses from [0,0,0]
+
+    A function that takes in a DataFrame of 3D points, and converts them to radiuses from the point [0,0,0]
+
+    Parameters
+    ----------
+    points : pandas.DataFrame
+        The DataFrame of points (should have "x","y" and "z" columns).
+    
+    Returns
+    -------
+    numpy.ndarray
+        An array of radiuses with shape equal to the number of points in the input DataFrame
+
+    """
     points = points.loc[:,["x","y","z"]].to_numpy()
     return spatial.distance.cdist(np.array([[0,0,0]]),points).flatten()
 
