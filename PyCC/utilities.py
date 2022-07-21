@@ -418,6 +418,21 @@ def points2radius(points):
     return spatial.distance.cdist(np.array([[0,0,0]]),points).flatten()
 
 def outdf2numpy(df):
+    """Converts an output DF from an evaluation, and converts it to numpy arrays.
+
+    A function that takes in a DataFrame with columns ["x","y","z","vx","vy","vz","ax","ay","az","gpe"], and converts each to numpy arrays with the shape (nsteps,nparticles,3 (or 1 for GPE)).
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame outputted from an evaluation.
+    
+    Returns
+    -------
+    dict
+        Dictionary containing the arrays for "pos" (the positions from the output), "vel" (the velocities from the output), "acc" (the accelerations form the output) and "gpe" (the GPEs from the output)
+
+    """
     steps = np.unique(df.loc[:,"step"].to_numpy())
     nsteps = steps.shape[0]
     ids = np.unique(df.loc[:,"id"].to_numpy())
@@ -433,6 +448,23 @@ def outdf2numpy(df):
     return {"pos":pos,"vel":vel,"acc":acc,"gpe":gpe}
 
 def downsample(df,amount):
+    """Downsamples an initial distribution of particles by amount.
+
+    A function that takes in a DataFrame with atleast columns ["x","y","z","mass"], and downsamples it to a new DataFrame, maintaining the total mass/density.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The input DataFrame.
+    amount : float
+        The amount to downsample. (1/amount) * n_particles will remain.
+    
+    Returns
+    -------
+    pandas.DataFrame
+        The outputted downsampled DataFrame.
+
+    """
     assert amount >= 1
     amount = 1/amount
     ids = np.unique(df.loc[:,"id"].to_numpy())
