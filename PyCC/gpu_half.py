@@ -53,8 +53,27 @@ def get_prog(n, plevel = "lowp"):
 
     """
 
+def time_control(current_acc,current_vel,prog,vao,pos_buffer,allParts,out_buffer,init_pos,masses_f4,n_particles,n_batches,batch_size,atol,dt):
+    current_pos = init_pos
 
-def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096,gpu_precision = "lowp"):
+    current_vel1 = current_vel + (current_acc/2) * dt
+    current_pos = init_pos + (current_vel1) * dt
+
+    current_vel2 = current_vel + (current_acc/2) * (dt/2)
+    current_pos2 = init_pos + (current_vel) * (dt/2)
+    out2 = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos2,masses_f4,n_particles,n_batches,batch_size)
+    current_acc2 = out2[:,[0,1,2]]
+    current_vel2 += (current_acc2) * (dt/2)
+    current_pos2 = current_pos2 + (current_vel) * (dt/2)
+
+    diff = np.sum(np.abs(current_pos - current_pos2))
+
+    if diff < atol:
+        return dt
+    else:
+        return time_control(current_acc,current_vel,prog,vao,pos_buffer,allParts,out_buffer,init_pos,masses_f4,n_particles,n_batches,batch_size,atol,dt/2)
+
+def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,batch_size=4096,gpu_precision = "lowp",dtatol=0):
 
     first = time.perf_counter()
 
@@ -86,6 +105,7 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     save_phi_acc = np.zeros((steps+1,n_particles,4),dtype=np.float32)
     save_vel = np.zeros((steps+1,n_particles,3),dtype=np.float32)
     save_pos = np.zeros_like(save_vel,dtype=np.float32)
+    save_dt = np.zeros(((steps+1),n_particles,1),dtype=np.float32)
 
     current_pos = np.copy(particles_f4)
     current_vel = np.copy(velocities.astype("f4"))
@@ -98,18 +118,35 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     save_phi_acc[0] = out
     current_acc = out[:,[0,1,2]]
 
-    for step in range(steps):
-        current_pos += (current_vel/2) * dt
-        current_vel += current_acc * dt
-        current_pos += (current_vel/2) * dt
+    original_dt = dt/2
 
-        save_vel[step+1] = current_vel
+    for step in range(steps):
+
+        if dt < original_dt:
+            dt = dt*2
+
+        if dtatol != 0:
+            dt = time_control(current_acc,current_vel,prog,vao,pos_buffer,allParts,out_buffer,particles_f4,masses_f4,n_particles,n_batches,batch_size,dtatol,dt)
+        for particle in range(n_particles):
+            save_dt[step][particle][0] = dt
+
+        current_vel += (current_acc/2) * dt
+
+        current_pos += (current_vel) * dt
+
         save_pos[step+1] = current_pos
 
-        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos,masses_f4,n_particles,n_batches)
+        out = phi_acc(prog,vao,pos_buffer,allParts,out_buffer,current_pos,masses_f4,n_particles,n_batches,batch_size)
 
         save_phi_acc[step+1] = out
         current_acc = out[:,[0,1,2]]
+
+        current_vel += (current_acc/2) * dt
+
+        save_vel[step+1] = current_vel
+    
+    for particle in range(n_particles):
+        save_dt[steps][particle][0] = save_dt[steps-1][0][0]
 
     vao.release()
     prog.release()
@@ -125,10 +162,11 @@ def evaluate(particles, velocities, masses, steps = 0, eps = 0, G = 1,dt = 1,bat
     save_vel = pd.DataFrame(np.reshape(save_vel,(save_vel.shape[0] * save_vel.shape[1], save_vel.shape[2])),columns=["vx","vy","vz"])
     save_pos = pd.DataFrame(np.reshape(save_pos,(save_pos.shape[0] * save_pos.shape[1], save_pos.shape[2])),columns=["x","y","z"])
     save_phi_acc = pd.DataFrame(np.reshape(save_phi_acc,(save_phi_acc.shape[0] * save_phi_acc.shape[1], save_phi_acc.shape[2])),columns=["ax","ay","az","gpe"])
+    save_dt = pd.DataFrame(save_dt.reshape((save_dt.shape[0] * save_dt.shape[1],save_dt.shape[2])),columns=["dt"])
 
     second = time.perf_counter()
 
-    return pd.concat((step_labels,ids,save_pos,save_vel,save_phi_acc),axis=1),{"eval_time":second-first}
+    return pd.concat((step_labels,save_dt,ids,save_pos,save_vel,save_phi_acc),axis=1),{"eval_time":second-first}
 
 def phi_acc(prog,vao,pos_buffer,allParts,out_buffer,particles,masses,n_particles,n_batches,batch_size=4096):
     combined = np.concatenate((particles,masses),axis=1).astype("f2").astype("f4").tobytes()

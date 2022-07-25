@@ -10,7 +10,7 @@ import gpu_single
 import gpu_half
 import numpy as np
 
-def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False, gpu_precision = "highp"):
+def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", accelerate=False, gpu_precision = "highp",dtatol=0):
     """Does an nbody n**2 simulation on an initial distribution of particles.
 
     A function that takes in a DataFrame with columns ["x","y","z","vx","vy","vz","mass"], and does a nbody n**2 simulation on it.
@@ -46,9 +46,9 @@ def evaluate(particle_df, steps = 0, eps = 0, G = 1, dt = 1, precision="f8", acc
 
     if accelerate:
         if precision == "f4":
-            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision)
+            return gpu_single.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision,dtatol=dtatol)
         if precision == "f2":
-            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision)
+            return gpu_half.evaluate(particles,velocities,masses,steps,eps,G,dt,gpu_precision=gpu_precision,dtatol=dtatol)
     else:
         if precision == "f8":
             return direct_sum_double.evaluate(particles,velocities,masses,steps,eps,G,dt)

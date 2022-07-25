@@ -122,14 +122,22 @@ cdef double[:,:,:] c_evaluate(double[:,:] particles, double[:,:] velocities, dou
             part_out[step+1,i,0] = step+1
             part_out[step+1,i,1] = i
 
-        add2d(current_part_vel,current_part_pos,0.5 * dt)
-        add2d(current_part_acc,current_part_vel,dt)
-        add2d(current_part_vel,current_part_pos,0.5 * dt)
+        #add2d(current_part_vel,current_part_pos,0.5 * dt)
+        #add2d(current_part_acc,current_part_vel,dt)
+        #add2d(current_part_vel,current_part_pos,0.5 * dt)
+
+        add2d(current_part_acc,current_part_vel,0.5 * dt)
+
+        add2d(current_part_vel,current_part_pos,dt)
 
         copy2out2d(current_part_pos,step+1,2,part_out)
-        copy2out2d(current_part_vel,step+1,5,part_out)
+        
 
         phi_acc(current_part_pos,masses,G,eps,current_part_acc,current_part_phi)
+
+        add2d(current_part_acc,current_part_vel,0.5 * dt)
+
+        copy2out2d(current_part_vel,step+1,5,part_out)
 
         copy2out2d(current_part_acc,step+1,8,part_out)
         copy2out1d(current_part_phi,step+1,11,part_out)
